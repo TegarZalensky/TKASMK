@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ujian TKA - Siap Ujian!</title>
+    <title>Sistem Seleksi Akademik</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -33,19 +33,14 @@
             background-color: #f3f4f6;
             border-color: #9ca3af;
         }
-        /* Style untuk Radio (Pilihan Tunggal) */
-        input[type="radio"]:checked + .option-label {
-            background-color: #d1e5f8;
-            border-color: #3b82f6;
-            font-weight: 600;
-        }
-         /* Style untuk Checkbox (Pilihan Majemuk) */
+        /* Style untuk Radio/Checkbox (Pilihan Aktif - Formal) */
+        input[type="radio"]:checked + .option-label,
         input[type="checkbox"]:checked + .option-label {
-            background-color: #d1e5f8;
-            border-color: #3b82f6;
+            background-color: #e0e7ff; /* light indigo */
+            border-color: #4f46e5; /* indigo-600 */
             font-weight: 600;
         }
-        /* Style untuk Hasil */
+        /* Style untuk Hasil (Tetap Fungsional) */
         .correct {
             background-color: #d1fae5 !important;
             border-color: #10b981 !important;
@@ -56,20 +51,20 @@
             border-color: #ef4444 !important;
             font-weight: 700;
         }
-        /* Style untuk Soal: Font disesuaikan agar tidak terlalu besar di HP */
+        /* Font size */
         .math-eq, .text-content, .katex-display, .katex {
-            font-size: 1rem; /* Ukuran default (mobile) 16px */
+            font-size: 1rem; 
             font-weight: 500;
         }
-        @media (min-width: 640px) { /* breakpoint sm: ke atas */
+        @media (min-width: 640px) { 
             .math-eq, .text-content, .katex-display, .katex {
-                font-size: 1.125rem; /* Ukuran 18px di desktop/tablet */
+                font-size: 1.125rem; 
             }
         }
         .question-card {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
         }
-        /* Style untuk Timer */
+        /* Timer Styles (Fungsional) */
         .timer-running {
             background-color: #22c55e;
             color: white;
@@ -81,6 +76,10 @@
         .timer-critical {
             background-color: #ef4444;
             color: white;
+        }
+        /* Hapus style diagram karena gambar dihilangkan */
+        .diagram-box {
+            display: none;
         }
     </style>
 </head>
@@ -108,25 +107,25 @@
         <!-- =========== 1. HALAMAN PEMBUKA (SPLASH) =========== -->
         <!-- ============================================== -->
         <div id="splash-screen" class="p-4 sm:p-8 bg-white rounded-xl shadow-2xl text-center flex flex-col justify-center h-[90vh] sm:h-[80vh]">
-            <h1 class="text-4xl sm:text-6xl font-extrabold text-blue-700 mb-2">Ujian TKA</h1> <!-- Dikecilkan dari 5xl ke 4xl di mobile -->
-            <p class="text-xl sm:text-3xl font-black text-red-600 mb-8 sm:mb-10 border-b-4 border-red-500 pb-2 sm:pb-3 inline-block mx-auto"> <!-- Dikecilkan dari 2xl ke xl di mobile -->
-                WOI LATIHAN TKA JIR!!
+            <h1 class="text-4xl sm:text-6xl font-extrabold text-indigo-700 mb-2">Sistem Seleksi Akademik</h1> 
+            <p class="text-xl sm:text-2xl font-semibold text-gray-700 mb-8 sm:mb-10 border-b-4 border-indigo-500 pb-2 sm:pb-3 inline-block mx-auto"> 
+                Portal Ujian Kemampuan Dasar dan Akademik (TKA)
             </p>
 
             <h2 class="text-lg sm:text-2xl font-semibold mb-6 text-gray-800">Pilih Mata Pelajaran:</h2>
 
             <div class="space-y-3 max-w-sm mx-auto">
-                <!-- Ukuran tombol dikecilkan di mobile -->
+                <!-- Tombol diseragamkan dengan warna institusional Indigo -->
                 <button id="btn-inggris" 
-                    class="w-full py-3 sm:py-4 bg-purple-600 text-white font-bold text-xl sm:text-2xl rounded-xl shadow-lg hover:bg-purple-700 transition duration-300 transform hover:scale-105">
+                    class="w-full py-3 sm:py-4 bg-indigo-600 text-white font-bold text-xl sm:text-2xl rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105">
                     Bahasa Inggris (30 Soal)
                 </button>
                 <button id="btn-indonesia"
-                    class="w-full py-3 sm:py-4 bg-yellow-600 text-white font-bold text-xl sm:text-2xl rounded-xl shadow-lg hover:bg-yellow-700 transition duration-300 transform hover:scale-105">
+                    class="w-full py-3 sm:py-4 bg-indigo-600 text-white font-bold text-xl sm:text-2xl rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105">
                     Bahasa Indonesia (30 Soal)
                 </button>
                 <button id="btn-matematika"
-                    class="w-full py-3 sm:py-4 bg-green-600 text-white font-bold text-xl sm:text-2xl rounded-xl shadow-lg hover:bg-green-700 transition duration-300 transform hover:scale-105">
+                    class="w-full py-3 sm:py-4 bg-indigo-600 text-white font-bold text-xl sm:text-2xl rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105">
                     Matematika (30 Soal)
                 </button>
             </div>
@@ -139,13 +138,13 @@
         <!-- =========== 2. HALAMAN UJIAN UTAMA =========== -->
         <!-- ============================================== -->
         <div id="exam-container" class="hidden">
-            <header class="mb-4 sm:mb-8 p-3 sm:p-6 bg-white rounded-xl shadow-lg sticky top-0 z-10"> <!-- Padding header disesuaikan -->
+            <header class="mb-4 sm:mb-8 p-3 sm:p-6 bg-white rounded-xl shadow-lg sticky top-0 z-10 border-b-4 border-indigo-700"> <!-- Border formal di header -->
                 <!-- Tombol Keluar dan Timer di baris yang sama -->
                 <div class="flex items-center justify-between mb-3 sm:mb-4">
                     <button id="btn-show-exit-modal" class="px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm bg-red-500 text-white font-bold rounded-lg shadow-md hover:bg-red-600 transition duration-200">
                         &larr; Keluar
                     </button>
-                    <!-- Timer Display dipindah ke sini -->
+                    <!-- Timer Display -->
                     <div id="timer-display" class="px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-lg font-bold timer-running shadow-md">
                         Waktu Tersisa: 30:00
                     </div>
@@ -153,7 +152,7 @@
                 
                 <!-- Judul Utama Ujian -->
                 <div class="text-center">
-                    <h1 id="exam-title" class="text-xl sm:text-4xl font-extrabold text-blue-700 mb-1"></h1>
+                    <h1 id="exam-title" class="text-xl sm:text-4xl font-extrabold text-indigo-700 mb-1"></h1>
                     <p class="text-xs sm:text-base text-gray-600">Waktu: 30 Menit</p>
                 </div>
             </header>
@@ -163,17 +162,17 @@
             </form>
 
             <div class="flex justify-center mb-10">
-                <button id="submit-button" class="px-6 py-2 sm:px-8 sm:py-3 bg-green-600 text-white font-bold text-base sm:text-lg rounded-xl shadow-lg hover:bg-green-700 transition duration-300 transform hover:scale-105">
+                <button id="submit-button" class="px-6 py-2 sm:px-8 sm:py-3 bg-indigo-700 text-white font-bold text-base sm:text-lg rounded-lg shadow-lg hover:bg-indigo-800 transition duration-300 transform hover:scale-105">
                     Kirim Jawaban & Lihat Hasil
                 </button>
             </div>
 
             <!-- Result Section -->
-            <div id="result-section" class="hidden text-center p-4 sm:p-8 bg-white rounded-xl shadow-xl">
+            <div id="result-section" class="hidden text-center p-4 sm:p-8 bg-white rounded-xl shadow-xl border-t-4 border-indigo-700">
                 <h2 class="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 text-gray-800">Hasil Ujian Anda</h2>
-                <div id="score-display" class="text-4xl sm:text-5xl font-extrabold mb-4 text-blue-600"></div>
+                <div id="score-display" class="text-4xl sm:text-5xl font-extrabold mb-4 text-indigo-700"></div>
                 <p id="status-message" class="text-base sm:text-xl font-semibold"></p>
-                <button id="btn-back-to-menu-result" class="mt-4 sm:mt-6 px-4 py-2 text-sm sm:text-base bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-200">
+                <button id="btn-back-to-menu-result" class="mt-4 sm:mt-6 px-4 py-2 text-sm sm:text-base bg-gray-500 text-white font-bold rounded-lg hover:bg-gray-600 transition duration-200">
                     Kembali ke Menu Utama
                 </button>
             </div>
@@ -182,6 +181,9 @@
     </div>
 
     <script>
+        // API Key for Gemini is provided at runtime
+        const apiKey = ""; 
+
         // --- Variabel Global ---
         const TIME_LIMIT_SECONDS = 30 * 60; // 30 menit
         let timeRemaining = TIME_LIMIT_SECONDS;
@@ -189,8 +191,9 @@
         let isExamActive = false;
         let currentQuestions = [];
         let correctAnswers = {};
+        let currentSubject = ''; // Tambah variabel untuk subjek saat ini
 
-        // --- DATA SOAL UJIAN (SC: Single Choice, MC: Multiple Choice, TF: True/False) ---
+        // --- DATA SOAL UJIAN (Diagram dihapus) ---
         const mathQuestions = [
             // ELEMEN 1: BILANGAN REAL (6 SOAL, mix SC/MC/TF)
             { id: 1, element: 'Bilangan', type: 'single-choice', question: 'Hitunglah hasil dari $15 \\times (-4) + 60 \\div 12$.', options: ['A. -65', 'B. -55', 'C. -5', 'D. 5', 'E. 65'], correct: 'C' },
@@ -266,6 +269,10 @@
             { id: 20, element: 'BI', competence: 'Inferensial', type: 'true-false', question: 'Pernyataan: Menurut teks, transparansi algoritma (explainability) harus ada setelah AI diserahkan tanggung jawab penuh.', correct: 'B' }, // B. Salah (prasyarat utama sebelum diserahkan tanggung jawab penuh)
             { id: 21, element: 'BI', competence: 'Inferensial', type: 'single-choice', question: 'Implikasi dari "efisiensi waktu yang signifikan" di sektor manufaktur adalah...', options: ['A. Peningkatan jumlah pekerja.', 'B. Penurunan investasi teknologi.', 'C. Proses produksi menjadi lebih cepat dan hemat biaya.', 'D. AI menjadi tidak diperlukan lagi.', 'E. Semua mesin akan rusak lebih cepat.'], correct: 'C' },
             
+            // --- RESET CONTEXT BLOCK ---
+            { type: 'text', content: null }, 
+            // --- END RESET CONTEXT BLOCK ---
+
             // Sisanya tetap soal tunggal tanpa teks konteks
             { id: 22, element: 'BI', competence: 'Tekstual', type: 'single-choice', question: 'Pilihlah kalimat yang menggunakan kata serapan dari bahasa daerah!', options: ['A. Paman membeli karcis di loket stasiun.', 'B. Ia merasa cemas dengan masa depannya.', 'C. Anak itu sangat gembira setelah mendapat hadiah.', 'D. Ibu membuat kue lapis yang legit sekali.', 'E. Kami berdiskusi tentang masalah ekonomi makro.'], correct: 'D' },
             { id: 23, element: 'BI', competence: 'Evaluasi', type: 'single-choice', question: 'Penggunaan kata \'otonom\' untuk menggambarkan pengambil keputusan dalam AI (Soal 19) dinilai...', options: ['A. Tidak tepat, karena AI tidak punya akal.', 'B. Tepat, karena AI bertindak mandiri tanpa intervensi manusia.', 'C. Salah, karena seharusnya menggunakan kata \'otomatis\'.', 'D. Berlebihan, karena hanya mesin sederhana.', 'E. Baku, tapi maknanya kurang jelas.'], correct: 'B' },
@@ -310,6 +317,10 @@
             { id: 44, element: 'ING', competence: 'Apresiasi', type: 'single-choice', question: 'The author\'s overall tone in Text 3 can best be described as...', options: ['A. Indifferent and neutral.', 'B. Highly optimistic and cheerful.', 'C. Critical and apprehensive.', 'D. Whimsical and nostalgic.', 'E. Humorous and lighthearted.'], correct: 'C' },
             { id: 45, element: 'ING', competence: 'Evaluasi', type: 'single-choice', question: 'If the text had stated that a supply chain crisis was caused by space-faring aliens, this would be an example of...', options: ['A. A realistic prediction.', 'B. A scientifically verifiable fact.', 'C. A fantastical element.', 'D. A well-supported hypothesis.', 'E. A minor technical error.'], correct: 'C' },
             
+            // --- RESET CONTEXT BLOCK ---
+            { type: 'text', content: null },
+            // --- END RESET CONTEXT BLOCK ---
+            
             // SOAL 46-60 (CAMPURAN - INFERENSIAL LANJUTAN/APRESIASI)
             { id: 46, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'The phrase "a silver lining" most likely implies a(n)...', options: ['A. Negative outcome', 'B. Hidden benefit or positive aspect', 'C. Neutral observation', 'D. Dangerous consequence', 'E. Financial disaster'], correct: 'B' },
             { id: 47, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'If a news article is titled "Why the New Tax Law Failed to Boost Investment," the target audience is most likely...', options: ['A. Elementary school students', 'B. Financial experts and policymakers', 'C. Fiction novelists', 'D. Professional athletes', 'E. Gardeners and botanists'], correct: 'B' },
@@ -338,7 +349,7 @@
             
             rawQuestions.forEach(item => {
                 if (item.type === 'text') {
-                    // Hanya BI dan ING yang memerlukan konteks berulang
+                    // Hanya BI dan ING yang memerlukan konteks berulang. Content null akan mereset.
                     if (subject === 'BI' || subject === 'ING') {
                         currentTextContext = item.content;
                     }
@@ -349,17 +360,156 @@
                         questionNumber: questionNumberCounter++,
                         textContext: currentTextContext,
                     });
-                    // Hapus konteks teks jika soal tersebut bukan bagian dari teks (ini hanya terjadi di MTK,
-                    // tapi MTK tidak melalui fungsi ini, jadi ini aman)
+                    // Reset currentTextContext agar teks tidak terulang ke soal yang tidak relevan (MTK)
+                    if (subject !== 'BI' && subject !== 'ING') {
+                        currentTextContext = null;
+                    }
                 }
             });
-            // Untuk MTK, kita perlu menambahkan questionNumber secara manual karena tidak ada blok 'text'
-            if (subject === 'MTK') {
+
+            // Jika MTK, kita perlu memastikan nomor soal benar (walaupun tidak ada blok 'text', lebih aman)
+            if (subject === 'MTK' && processedQuestions.length === 0) {
                  rawQuestions.forEach((q, index) => q.questionNumber = index + 1);
                  return rawQuestions;
             }
             return processedQuestions;
         }
+        
+        // FUNGSI UTILITY LLM: Exponential Backoff (Wajib)
+        async function tryWithExponentialBackoff(fetcher, maxRetries = 5) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    return await fetcher();
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error; 
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        // FUNGSI UTILITY LLM: Meminta Penjelasan Detail dari Gemini
+        async function getDetailedExplanation(questionData, subject, questionCardId) {
+            const explanationDiv = document.getElementById(`explanation-${questionCardId}`);
+            const button = document.getElementById(`btn-explain-${questionCardId}`);
+
+            if (!explanationDiv || !button) return;
+
+            explanationDiv.classList.remove('hidden');
+            explanationDiv.innerHTML = '<div class="text-center text-indigo-600 font-semibold flex items-center justify-center"><svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Memproses... Tunggu sebentar.</div>';
+            button.disabled = true;
+            button.textContent = 'Memuat Penjelasan...';
+            button.classList.add('bg-gray-400', 'cursor-not-allowed');
+            button.classList.remove('bg-indigo-500', 'hover:bg-indigo-600');
+
+            const isEnglish = subject === 'ING';
+            const subjectName = subject === 'MTK' ? 'Matematika' : (subject === 'BI' ? 'Bahasa Indonesia' : 'English');
+
+            // 1. Siapkan Prompt dan System Instruction
+            const correctText = Array.isArray(questionData.correct) ? questionData.correct.join(', ') : questionData.correct;
+            const allOptions = questionData.options ? questionData.options.join('; ') : 'True/False';
+            
+            // PROMPT DITINGKATKAN untuk memaksa langkah penyelesaian dan justifikasi
+            const systemPrompt = isEnglish
+                ? `You are a world-class test preparation tutor specializing in ${subjectName} reading comprehension and textual analysis. Provide a concise, clear, and highly detailed explanation for the following question, focusing on: 1. The detailed reasoning behind the correct answer(s). 2. Why the incorrect options are wrong. 3. (For Math questions) Include step-by-step solutions using KaTeX notation ($a^2$). Respond entirely in English.`
+                : `Anda adalah tutor persiapan TKA kelas dunia yang berspesialisasi dalam subjek ${subjectName}. Berikan penjelasan yang ringkas, jelas, dan sangat rinci, fokus pada: 1. Alasan mendalam di balik jawaban yang benar. 2. Mengapa opsi yang salah keliru. 3. (Khusus Matematika) Sertakan langkah-langkah penyelesaian rinci menggunakan notasi KaTeX ($a^2$) dan berikan perhitungan akhir. Jawab seluruhnya dalam Bahasa Indonesia.`;
+
+            const userQuery = isEnglish
+                ? `Explain the following question from the TKA exam:
+                  Question Type: ${questionData.type}
+                  Question: ${questionData.question}
+                  Options: ${allOptions}
+                  Correct Answer(s): ${correctText}
+                  Reading Context (if applicable): ${questionData.textContext || 'N/A'}`
+                : `Jelaskan soal TKA berikut:
+                  Tipe Soal: ${questionData.type}
+                  Soal: ${questionData.question}
+                  Opsi Jawaban: ${allOptions}
+                  Jawaban Benar: ${correctText}
+                  Konteks Bacaan (jika ada): ${questionData.textContext || 'N/A'}`;
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }], // Aktifkan Google Search Grounding
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+            
+            try {
+                const response = await tryWithExponentialBackoff(async () => {
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error(`API error: ${res.statusText}`);
+                    return res;
+                });
+                
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || 
+                             (isEnglish ? "Explanation could not be generated." : "Penjelasan gagal dibuat.");
+                
+                // 2. Tampilkan Hasil
+                explanationDiv.classList.add('p-3', 'bg-indigo-50', 'border-indigo-300', 'border');
+                explanationDiv.innerHTML = `<h4 class="font-bold text-indigo-800 mb-2">${isEnglish ? 'Detailed Explanation' : 'Penjelasan Mendalam'}</h4><div class="text-gray-800">${text}</div>`;
+                
+                // Render KaTeX jika subjeknya Matematika
+                if (subject === 'MTK' && typeof renderMathInElement !== 'undefined') {
+                    renderMathInElement(explanationDiv, {
+                        delimiters: [
+                            {left: "$$", right: "$$", display: true},
+                            {left: "$", right: "$", display: false},
+                        ],
+                        throwOnError: false
+                    });
+                }
+                
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                explanationDiv.innerHTML = `<div class="text-red-600 font-semibold">${isEnglish ? 'Error fetching explanation. Please try again later.' : 'Gagal mendapatkan penjelasan. Silakan coba lagi nanti.'}</div>`;
+                explanationDiv.classList.add('p-3', 'bg-red-100', 'border-red-300', 'border');
+            } finally {
+                // 3. Reset Button
+                button.textContent = isEnglish ? '✨ Get Deep Explanation' : '✨ Minta Penjelasan Mendalam';
+                button.disabled = false;
+                button.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                button.classList.add('bg-indigo-500', 'hover:bg-indigo-600');
+            }
+        }
+
+        // FUNGSI PEMBANTU: Menambahkan tombol penjelasan ke kartu soal
+        function setupExplanationButton(q, element, questionCardId) {
+            const buttonId = `btn-explain-${questionCardId}`;
+            
+            // Cek apakah tombol sudah ada (untuk menghindari duplikasi jika fungsi dipanggil lagi)
+            if (document.getElementById(buttonId)) return;
+
+            const buttonHTML = `
+                <div class="mt-3">
+                    <button id="${buttonId}" class="px-3 py-1 text-xs bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition duration-200">
+                        ✨ Minta Penjelasan Mendalam
+                    </button>
+                </div>
+                <div id="explanation-${questionCardId}" class="mt-4 text-sm rounded-lg hidden">
+                    <!-- Penjelasan LLM di sini -->
+                </div>
+            `;
+            const questionCard = document.getElementById(questionCardId);
+            if (questionCard) {
+                questionCard.insertAdjacentHTML('beforeend', buttonHTML);
+                
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        // Ambil data jawaban (options dan correct answer) dari data soal yang asli
+                        getDetailedExplanation(q, element, questionCardId);
+                    });
+                }
+            }
+        }
+
 
         // --- Definisi Fungsi Utama ---
         function showExitModal() {
@@ -383,6 +533,7 @@
             timerInterval = null; 
             isExamActive = false;
             timeRemaining = TIME_LIMIT_SECONDS;
+            currentSubject = '';
             
             const examContainer = document.getElementById('exam-container');
             const splashScreen = document.getElementById('splash-screen');
@@ -395,7 +546,7 @@
             if (submitButton) {
                 submitButton.disabled = false;
                 submitButton.textContent = 'Kirim Jawaban & Lihat Hasil';
-                submitButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                submitButton.classList.add('bg-indigo-700', 'hover:bg-indigo-800');
                 submitButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
             }
             if (resultSection) resultSection.classList.add('hidden');
@@ -461,7 +612,9 @@
             const form = document.getElementById('quiz-form');
             if (!form) return; 
 
-            form.innerHTML = currentQuestions.map(q => {
+            let lastBlockContext = null;
+            
+            form.innerHTML = currentQuestions.map((q, index) => {
                 // Tentukan tipe input: checkbox untuk multi-choice, radio untuk single/true-false
                 const inputType = q.type === 'multi-choice' ? 'checkbox' : 'radio';
                 
@@ -497,6 +650,37 @@
                     `;
                 }).join('');
 
+                // --- LOGIC FOR TEXT BLOCK HEADER ---
+                let blockHeaderHTML = '';
+                const isTextSubject = q.element === 'BI' || q.element === 'ING';
+
+                if (isTextSubject && q.textContext && q.textContext !== lastBlockContext) {
+                    // Start of a new text block
+                    const startNumber = q.questionNumber;
+                    let endNumber = startNumber;
+
+                    // Find the end number of this block
+                    for (let i = index; i < currentQuestions.length; i++) {
+                        if (currentQuestions[i].textContext === q.textContext) {
+                            endNumber = currentQuestions[i].questionNumber;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    const headerText = isTextSubject 
+                        ? (q.element === 'ING' 
+                            ? `The following questions (No. ${startNumber} - ${endNumber}) refer to the text below.`
+                            : `Pernyataan ini untuk soal nomor ${startNumber} - ${endNumber}.`)
+                        : '';
+
+                    blockHeaderHTML = `<div class="text-lg font-bold text-indigo-700 mt-6 mb-3 border-b-2 border-indigo-300 pb-2">${headerText}</div>`;
+                    lastBlockContext = q.textContext;
+                } else if (!isTextSubject) {
+                    // Reset context for non-text subjects like MTK
+                    lastBlockContext = null;
+                }
+
                 // Teks konteks diulang jika ada (untuk BI/ING)
                 const textContextHTML = q.textContext ? 
                     `<div class="context-box bg-gray-50 p-4 rounded-xl mb-4 border-l-4 border-indigo-400">
@@ -504,14 +688,21 @@
                         <div class="text-sm sm:text-base text-gray-700">${q.textContext}</div>
                     </div>` : '';
 
+                // Diagram Matematika (jika ada, sekarang tidak ada karena dihapus)
+                const diagramHTML = q.diagram ? 
+                    `<div class="diagram-box text-center my-4 p-2 bg-gray-50 rounded-lg">
+                        <img src="${q.diagram}" alt="Diagram ilustrasi soal" class="mx-auto my-4 rounded-lg shadow-md max-w-full h-auto sm:max-w-xs" onerror="this.onerror=null; this.src='https://placehold.co/200x200/cccccc/000000?text=Diagram+Ilustrasi'">
+                    </div>` : '';
+
                 const competenceLabel = q.competence ? ` | ${q.competence}` : '';
 
                 const card = `
-                    <div id="card-q${q.id}" class="question-card bg-white p-4 sm:p-6 rounded-xl border-t-4 border-blue-500">
-                        <p class="text-xs font-light text-blue-500 mb-1">(${q.element}${competenceLabel})</p>
+                    <div id="card-q${q.id}" class="question-card bg-white p-4 sm:p-6 rounded-xl border-t-4 border-indigo-700">
+                        <p class="text-xs font-light text-indigo-500 mb-1">(${q.element}${competenceLabel})</p>
                         <p class="text-base sm:text-lg font-semibold mb-3 text-gray-800">Soal ${q.questionNumber}:</p>
                         
                         ${textContextHTML}
+                        ${diagramHTML}
                         
                         ${instruction}
                         <div class="text-lg sm:text-xl mb-4 font-medium text-gray-900">
@@ -520,7 +711,7 @@
                         <div class="options-container flex flex-col">${optionsHTML}</div>
                     </div>
                 `;
-                return card;
+                return blockHeaderHTML + card;
             }).join('');
 
             // Panggil fungsi render Math setelah semua soal di-render
@@ -548,21 +739,22 @@
             let score = 0;
             
             submitButton.disabled = true;
-            submitButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+            submitButton.classList.remove('bg-indigo-700', 'hover:bg-indigo-800');
             submitButton.classList.add('bg-gray-400', 'cursor-not-allowed');
             submitButton.textContent = 'Hasil Ditampilkan';
 
             currentQuestions.forEach(q => {
-                const questionCard = document.getElementById(`card-q${q.id}`);
+                const questionCardId = `card-q${q.id}`;
+                const questionCard = document.getElementById(questionCardId);
                 const optionsContainer = questionCard?.querySelector('.options-container');
 
                 if (!questionCard || !optionsContainer) return;
 
-                questionCard.classList.remove('border-blue-500', 'border-yellow-500', 'border-red-500', 'border-green-500');
+                questionCard.classList.remove('border-blue-500', 'border-yellow-500', 'border-red-500', 'border-green-500', 'border-indigo-700'); // Hapus semua border lama
 
                 let isCorrect = false;
                 let selectedValues = [];
-                // Pastikan correctValues selalu berupa array untuk mempermudah perbandingan
+                
                 const rawCorrect = correctAnswers[q.id];
                 const correctValues = Array.isArray(rawCorrect) ? rawCorrect : [rawCorrect];
                 
@@ -609,6 +801,9 @@
                         });
                     }
                 }
+
+                // 3. Tambahkan tombol penjelasan LLM
+                setupExplanationButton(q, currentSubject, questionCardId);
             });
 
             const maxScore = totalQuestions;
@@ -639,19 +834,23 @@
             timerInterval = null;
             correctAnswers = {};
             currentQuestions = [];
+            currentSubject = subject;
 
+            let rawData;
             if (subject === 'MTK') {
                 document.getElementById('exam-title').textContent = "Ujian TKA Matematika (30 Soal)";
-                currentQuestions = processQuestions(mathQuestions, subject);
+                rawData = mathQuestions;
             } else if (subject === 'BI') {
                 document.getElementById('exam-title').textContent = "Ujian TKA Bahasa Indonesia (30 Soal)";
-                currentQuestions = processQuestions(indonesianQuestions, subject);
+                rawData = indonesianQuestions;
             } else if (subject === 'ING') {
                 document.getElementById('exam-title').textContent = "Ujian TKA Bahasa Inggris (30 Soal)";
-                currentQuestions = processQuestions(englishQuestions, subject);
+                rawData = englishQuestions;
             } else {
                 return;
             }
+
+            currentQuestions = processQuestions(rawData, subject);
             
             currentQuestions.forEach(q => {
                 if (q.id && q.correct) {
@@ -707,4 +906,3 @@
     </script>
 </body>
 </html>
-
