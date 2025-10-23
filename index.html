@@ -6,6 +6,13 @@
     <title>Ujian TKA - Siap Ujian!</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- KaTeX CSS untuk rendering formula matematika -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" xintegrity="sha384-GvrDXeK3j9Q9uG0h/Wd+fB8sJ6I6/I+k0iC+O9uP2Qf0z1G0P6D7hF6J6l+n0w1I=" crossorigin="anonymous">
+    <!-- KaTeX JS dan auto-render (untuk merender semua $...$ dan $$...$$) -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" xintegrity="sha384-o683d5jHwHj6W73tFzFmK9kF10M/F0zU/JbB/Q/U1u5bB1o5FzB9L1F2k9F1" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" xintegrity="sha384-MTr9Ue0b0I/y9p/Z1G5N5FzFmK9kF10M/F0zU/JbB/Q/U1u5bB1o5FzB9L1F2k9F1" crossorigin="anonymous"></script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -14,7 +21,6 @@
         /* Style untuk Opsi Jawaban */
         .option-label {
             display: block;
-            /* Padding lebih kecil di mobile */
             padding: 0.8rem;
             margin: 0.4rem 0;
             border-radius: 0.5rem;
@@ -27,7 +33,14 @@
             background-color: #f3f4f6;
             border-color: #9ca3af;
         }
+        /* Style untuk Radio (Pilihan Tunggal) */
         input[type="radio"]:checked + .option-label {
+            background-color: #d1e5f8;
+            border-color: #3b82f6;
+            font-weight: 600;
+        }
+         /* Style untuk Checkbox (Pilihan Majemuk) */
+        input[type="checkbox"]:checked + .option-label {
             background-color: #d1e5f8;
             border-color: #3b82f6;
             font-weight: 600;
@@ -44,12 +57,12 @@
             font-weight: 700;
         }
         /* Style untuk Soal: Font disesuaikan agar tidak terlalu besar di HP */
-        .math-eq, .text-content {
+        .math-eq, .text-content, .katex-display, .katex {
             font-size: 1rem; /* Ukuran default (mobile) 16px */
             font-weight: 500;
         }
         @media (min-width: 640px) { /* breakpoint sm: ke atas */
-            .math-eq, .text-content {
+            .math-eq, .text-content, .katex-display, .katex {
                 font-size: 1.125rem; /* Ukuran 18px di desktop/tablet */
             }
         }
@@ -177,139 +190,178 @@
         let currentQuestions = [];
         let correctAnswers = {};
 
-        // --- DATA SOAL UJIAN (Data dicek ulang integritasnya) ---
+        // --- DATA SOAL UJIAN (SC: Single Choice, MC: Multiple Choice, TF: True/False) ---
         const mathQuestions = [
-            // ELEMEN 1: BILANGAN REAL (6 SOAL)
-            { id: 1, element: 'Bilangan', question: 'Hitunglah hasil dari 15 × (-4) + 60 : 12.', options: ['A. -65', 'B. -55', 'C. -5', 'D. 5', 'E. 65'], correct: 'C' },
-            { id: 2, element: 'Bilangan', question: 'Tentukan nilai p yang memenuhi sifat distributif: 12 × (50 - 2) = (12 × p) - (12 × 2).', options: ['A. 2', 'B. 10', 'C. 12', 'D. 48', 'E. 50'], correct: 'E' },
-            { id: 3, element: 'Bilangan', question: 'Sederhanakan bentuk 5⁴ × 5⁻⁶ × (5³)². ', options: ['A. 5²', 'B. 5³', 'C. 5⁴', 'D. 5⁶', 'E. 5¹⁰'], correct: 'C' },
-            { id: 4, element: 'Bilangan', question: 'Nilai dari 64¹/² - 125¹/³ adalah...', options: ['A. 1', 'B. 3', 'C. 4', 'D. 8', 'E. 13'], correct: 'B' },
-            { id: 5, element: 'Bilangan', question: 'Sederhanakan √75 + √48 - √27.', options: ['A. 6√3', 'B. 7√3', 'C. 8√3', 'D. 9√3', 'E. 10√3'], correct: 'A' },
-            { id: 6, element: 'Bilangan', question: 'Rasionalkan penyebut 4 / (√5 + √3).', options: ['A. 2(√5 + √3)', 'B. 2(√5 - √3)', 'C. 4(√5 - √3)', 'D. √5 - √3', 'E. 4(√5 + √3)'], correct: 'B' },
+            // ELEMEN 1: BILANGAN REAL (6 SOAL, mix SC/MC/TF)
+            { id: 1, element: 'Bilangan', type: 'single-choice', question: 'Hitunglah hasil dari $15 \\times (-4) + 60 \\div 12$.', options: ['A. -65', 'B. -55', 'C. -5', 'D. 5', 'E. 65'], correct: 'C' },
+            { id: 2, element: 'Bilangan', type: 'true-false', question: 'Pernyataan: Nilai dari $8^{2/3} + 9^{1/2}$ adalah 7.', correct: 'A' }, // A. Benar (4+3=7)
+            { id: 3, element: 'Bilangan', type: 'multi-choice', question: 'Pilih dua bentuk yang ekuivalen dengan $\\frac{1}{2\\sqrt{3}}$. (Pilih dua yang benar)', options: ['A. $\\frac{\\sqrt{3}}{6}$', 'B. $\\frac{\\sqrt{3}}{2\\sqrt{9}}$', 'C. $\\frac{3}{6\\sqrt{3}}$', 'D. $\\frac{2\\sqrt{3}}{12}$', 'E. $\\frac{\\sqrt{3}}{3}$'], correct: ['A', 'D'] }, // A=sqrt(3)/6. D = 2sqrt(3)/12 = sqrt(3)/6.
+            { id: 4, element: 'Bilangan', type: 'single-choice', question: 'Nilai dari $64^{1/2} - 125^{1/3}$ adalah...', options: ['A. 1', 'B. 3', 'C. 4', 'D. 8', 'E. 13'], correct: 'B' },
+            { id: 5, element: 'Bilangan', type: 'single-choice', question: 'Sederhanakan $\\sqrt{75} + \\sqrt{48} - \\sqrt{27}$.', options: ['A. $6\\sqrt{3}$', 'B. $7\\sqrt{3}$', 'C. $8\\sqrt{3}$', 'D. $9\\sqrt{3}$', 'E. $10\\sqrt{3}$'], correct: 'A' },
+            { id: 6, element: 'Bilangan', type: 'single-choice', question: 'Rasionalkan penyebut $\\frac{4}{\\sqrt{5} + \\sqrt{3}}$.', options: ['A. $2(\\sqrt{5} + \\sqrt{3})$', 'B. $2(\\sqrt{5} - \\sqrt{3})$', 'C. $4(\\sqrt{5} - \\sqrt{3})$', 'D. $\\sqrt{5} - \\sqrt{3}$', 'E. $4(\\sqrt{5} + \\sqrt{3})$'], correct: 'B' },
             // ELEMEN 2: ALJABAR (16 SOAL)
-            { id: 7, element: 'Aljabar', question: 'Harga 2 kg mangga dan 1 kg jeruk adalah Rp 42.000,00. Harga 1 kg mangga adalah Rp 3.000,00 lebih murah dari 1 kg jeruk. Harga 3 kg mangga adalah...', options: ['A. Rp 45.000,00', 'B. Rp 48.000,00', 'C. Rp 51.000,00', 'D. Rp 54.000,00', 'E. Rp 57.000,00'], correct: 'D' },
-            { id: 8, element: 'Aljabar', question: 'Penyelesaian dari 3(2x - 1) - 2(4x + 5) ≥ 5 adalah...', options: ['A. x ≥ -9', 'B. x ≤ -9', 'C. x ≥ 9', 'D. x ≤ 9', 'E. x ≤ -6'], correct: 'B' },
-            { id: 9, element: 'Aljabar', question: 'Daerah himpunan penyelesaian dari sistem pertidaksamaan x+y ≥ 4 dan 2x-y ≤ 4 pada kuadran I adalah...', options: ['A. Daerah di atas x+y=4 dan di atas 2x-y=4', 'B. Daerah di atas x+y=4 dan di bawah 2x-y=4', 'C. Daerah di bawah x+y=4 dan di atas 2x-y=4', 'D. Daerah di bawah x+y=4 dan di bawah 2x-y=4', 'E. Tidak ada daerah himpunan penyelesaian'], correct: 'B' },
-            { id: 10, element: 'Aljabar', question: 'Nilai minimum fungsi objektif f(x, y) = 3x + 5y yang memenuhi sistem pertidaksamaan x ≥ 0, y ≥ 0, x+2y ≥ 6, dan 3x+y ≥ 8 adalah...', options: ['A. 18', 'B. 19', 'C. 20', 'D. 24', 'E. 30'], correct: 'B' },
-            { id: 11, element: 'Aljabar', question: 'Jika (x, y) adalah penyelesaian dari sistem 2x - y = 8 dan x + 3y = 10, maka nilai x - 2y adalah...', options: ['A. 2', 'B. 4', 'C. 6', 'D. 8', 'E. 10'], correct: 'C' },
-            { id: 12, element: 'Aljabar', question: 'Sistem pertidaksamaan linear yang membatasi daerah dengan titik-titik sudut (0,0), (4,0), (0,6), dan (3,3) adalah...', options: ['A. 3x+2y ≤ 12; x ≥ 0; y ≥ 0', 'B. 3x+2y ≤ 18; x ≥ 0; y ≥ 0', 'C. 2x+3y ≤ 12; x ≥ 0; y ≥ 0', 'D. 2x+3y ≤ 18; x ≥ 0; y ≥ 0', 'E. 3x+4y ≤ 24; x ≥ 0; y ≥ 0'], correct: 'D' },
-            { id: 13, element: 'Aljabar', question: 'Tentukan domain (daerah asal) fungsi rasional f(x) = (x+3) / (x² - 4).', options: ['A. x ∈ R, x ≠ 4', 'B. x ∈ R, x ≠ 2', 'C. x ∈ R, x ≠ -2', 'D. x ∈ R, x ≠ 2 dan x ≠ -2', 'E. x ∈ R, x ≠ 3'], correct: 'D' },
-            { id: 14, element: 'Aljabar', question: 'Daerah hasil (range) dari fungsi kuadrat f(x) = x² - 4x + 3 adalah...', options: ['A. y ≥ -1', 'B. y ≤ -1', 'C. y ≥ 1', 'D. y ≤ 1', 'E. y ≥ 3'], correct: 'A' },
-            { id: 15, element: 'Aljabar', question: 'Jika f(x) = 2x + 1 dan g(x) = x² - 3, hitunglah nilai dari (g o f)(2).', options: ['A. 6', 'B. 12', 'C. 22', 'D. 24', 'E. 28'], correct: 'C' },
-            { id: 16, element: 'Aljabar', question: 'Jika (f o g)(x) = 2x² + 4x + 1 dan f(x) = 2x - 3, maka g(x) adalah...', options: ['A. x² + 2x + 2', 'B. x² + 2x - 2', 'C. 2x² + 4x + 4', 'D. x² + 2x + 4', 'E. x² + 2x'], correct: 'A' },
-            { id: 17, element: 'Aljabar', question: 'Tentukan fungsi invers dari f(x) = (3x - 1) / (2x + 5).', options: ['A. f⁻¹(x) = (-5x + 1) / (2x - 3)', 'B. f⁻¹(x) = (5x + 1) / (-2x + 3)', 'C. f⁻¹(x) = (-2x + 1) / (5x + 3)', 'D. f⁻¹(x) = (2x + 1) / (5x - 3)', 'E. f⁻¹(x) = (5x - 1) / (2x + 3)'], correct: 'A' },
-            { id: 18, element: 'Aljabar', question: 'Titik puncak dari fungsi kuadrat f(x) = -x² + 6x - 5 adalah...', options: ['A. (-3, 4)', 'B. (-3, -4)', 'C. (3, 4)', 'D. (3, -4)', 'E. (4, 3)'], correct: 'C' },
-            { id: 19, element: 'Aljabar', question: 'Suku ke-10 dari barisan aritmetika dengan suku ke-4 adalah 17 dan suku ke-7 adalah 29 adalah...', options: ['A. 37', 'B. 41', 'C. 45', 'D. 53', 'E. 57'], correct: 'B' },
-            { id: 20, element: 'Aljabar', question: 'Jumlah tak hingga dari deret geometri 18 + 12 + 8 + ... adalah...', options: ['A. 36', 'B. 48', 'C. 54', 'D. 60', 'E. 72'], correct: 'C' },
-            { id: 21, element: 'Aljabar', question: 'Modal sebesar Rp 1.000.000,00 diinvestasikan dengan bunga tunggal 10% per tahun. Nilai akhir modal setelah 3 tahun adalah...', options: ['A. Rp 1.300.000,00', 'B. Rp 1.331.000,00', 'C. Rp 1.350.000,00', 'D. Rp 1.400.000,00', 'E. Rp 1.500.000,00'], correct: 'A' },
-            { id: 22, element: 'Aljabar', question: 'Sebuah bola dijatuhkan dari ketinggian 12 meter dan memantul kembali dengan ketinggian 2/3 dari ketinggian sebelumnya. Panjang lintasan total bola sampai berhenti adalah...', options: ['A. 48 meter', 'B. 60 meter', 'C. 72 meter', 'D. 80 meter', 'E. 108 meter'], correct: 'B' },
+            { id: 7, element: 'Aljabar', type: 'single-choice', question: 'Harga 2 kg mangga dan 1 kg jeruk adalah Rp 42.000,00. Harga 1 kg mangga adalah Rp 3.000,00 lebih murah dari 1 kg jeruk. Harga 3 kg mangga adalah...', options: ['A. Rp 45.000,00', 'B. Rp 48.000,00', 'C. Rp 51.000,00', 'D. Rp 54.000,00', 'E. Rp 57.000,00'], correct: 'D' },
+            { id: 8, element: 'Aljabar', type: 'single-choice', question: 'Penyelesaian dari $3(2x - 1) - 2(4x + 5) \\geq 5$ adalah...', options: ['A. $x \\geq -9$', 'B. $x \\leq -9$', 'C. $x \\geq 9$', 'D. $x \\leq 9$', 'E. $x \\leq -6$'], correct: 'B' },
+            { id: 9, element: 'Aljabar', type: 'multi-choice', question: 'Pilih semua titik sudut yang membatasi daerah himpunan penyelesaian pertidaksamaan linear $x \\geq 0, y \\geq 0, x+y \\leq 5$.', options: ['A. (0, 0)', 'B. (5, 0)', 'C. (0, 5)', 'D. (5, 5)'], correct: ['A', 'B', 'C'] },
+            { id: 10, element: 'Aljabar', type: 'single-choice', question: 'Nilai minimum fungsi objektif $f(x, y) = 3x + 5y$ yang memenuhi sistem pertidaksamaan $x \\geq 0$, $y \\geq 0$, $x+2y \\geq 6$, dan $3x+y \\geq 8$ adalah...', options: ['A. 18', 'B. 19', 'C. 20', 'D. 24', 'E. 30'], correct: 'B' },
+            { id: 11, element: 'Aljabar', type: 'single-choice', question: 'Jika $(x, y)$ adalah penyelesaian dari sistem $2x - y = 8$ dan $x + 3y = 10$, maka nilai $x - 2y$ adalah...', options: ['A. 2', 'B. 4', 'C. 6', 'D. 8', 'E. 10'], correct: 'C' },
+            { id: 12, element: 'Aljabar', type: 'single-choice', question: 'Sistem pertidaksamaan linear yang membatasi daerah dengan titik-titik sudut $(0,0)$, $(4,0)$, $(0,6)$, dan $(3,3)$ adalah...', options: ['A. $3x+2y \\leq 12$; $x \\geq 0$; $y \\geq 0$', 'B. $3x+2y \\leq 18$; $x \\geq 0$; $y \\geq 0$', 'C. $2x+3y \\leq 12$; $x \\geq 0$; $y \\geq 0$', 'D. $2x+3y \\leq 18$; $x \\geq 0$; $y \\geq 0$', 'E. $3x+4y \\leq 24$; $x \\geq 0$; $y \\geq 0$'], correct: 'D' },
+            { id: 13, element: 'Aljabar', type: 'single-choice', question: 'Tentukan domain (daerah asal) fungsi rasional $f(x) = \\frac{x+3}{x^2 - 4}$.', options: ['A. $x \\in R, x \\neq 4$', 'B. $x \\in R, x \\neq 2$', 'C. $x \\in R, x \\neq -2$', 'D. $x \\in R, x \\neq 2$ dan $x \\neq -2$', 'E. $x \\in R, x \\neq 3$'], correct: 'D' },
+            { id: 14, element: 'Aljabar', type: 'single-choice', question: 'Daerah hasil (range) dari fungsi kuadrat $f(x) = x^2 - 4x + 3$ adalah...', options: ['A. $y \\geq -1$', 'B. $y \\leq -1$', 'C. $y \\geq 1$', 'D. $y \\leq 1$', 'E. $y \\geq 3$'], correct: 'A' },
+            { id: 15, element: 'Aljabar', type: 'single-choice', question: 'Jika $f(x) = 2x + 1$ dan $g(x) = x^2 - 3$, hitunglah nilai dari $(g \\circ f)(2)$.', options: ['A. 6', 'B. 12', 'C. 22', 'D. 24', 'E. 28'], correct: 'C' },
+            { id: 16, element: 'Aljabar', type: 'single-choice', question: 'Jika $(f \\circ g)(x) = 2x^2 + 4x + 1$ dan $f(x) = 2x - 3$, maka $g(x)$ adalah...', options: ['A. $x^2 + 2x + 2$', 'B. $x^2 + 2x - 2$', 'C. $2x^2 + 4x + 4$', 'D. $x^2 + 2x + 4$', 'E. $x^2 + 2x$'], correct: 'A' },
+            { id: 17, element: 'Aljabar', type: 'single-choice', question: 'Tentukan fungsi invers dari $f(x) = \\frac{3x - 1}{2x + 5}$.', options: ['A. $f^{-1}(x) = \\frac{-5x + 1}{2x - 3}$', 'B. $f^{-1}(x) = \\frac{5x + 1}{-2x + 3}$', 'C. $f^{-1}(x) = \\frac{-2x + 1}{5x + 3}$', 'D. $f^{-1}(x) = \\frac{2x + 1}{5x - 3}$', 'E. $f^{-1}(x) = \\frac{5x - 1}{2x + 3}$'], correct: 'A' },
+            { id: 18, element: 'Aljabar', type: 'true-false', question: 'Pernyataan: Fungsi kuadrat $f(x) = -x^2 + 6x - 5$ membuka ke atas.', correct: 'B' }, // B. Salah (karena koefisien x^2 negatif)
+            { id: 19, element: 'Aljabar', type: 'single-choice', question: 'Suku ke-10 dari barisan aritmetika dengan suku ke-4 adalah 17 dan suku ke-7 adalah 29 adalah...', options: ['A. 37', 'B. 41', 'C. 45', 'D. 53', 'E. 57'], correct: 'B' },
+            { id: 20, element: 'Aljabar', type: 'single-choice', question: 'Jumlah tak hingga dari deret geometri $18 + 12 + 8 + \\dots$ adalah...', options: ['A. 36', 'B. 48', 'C. 54', 'D. 60', 'E. 72'], correct: 'C' },
+            { id: 21, element: 'Aljabar', type: 'single-choice', question: 'Modal sebesar Rp 1.000.000,00 diinvestasikan dengan bunga tunggal 10% per tahun. Nilai akhir modal setelah 3 tahun adalah...', options: ['A. Rp 1.300.000,00', 'B. Rp 1.331.000,00', 'C. Rp 1.350.000,00', 'D. Rp 1.400.000,00', 'E. Rp 1.500.000,00'], correct: 'A' },
+            { id: 22, element: 'Aljabar', type: 'single-choice', question: 'Sebuah bola dijatuhkan dari ketinggian 12 meter dan memantul kembali dengan ketinggian $2/3$ dari ketinggian sebelumnya. Panjang lintasan total bola sampai berhenti adalah...', options: ['A. 48 meter', 'B. 60 meter', 'C. 72 meter', 'D. 80 meter', 'E. 108 meter'], correct: 'B' },
             // ELEMEN 3: GEOMETRI DAN PENGUKURAN (4 SOAL)
-            { id: 23, element: 'Geometri', question: 'Diketahui persegi panjang memiliki panjang 12 cm dan lebar 5 cm. Panjang diagonal persegi panjang tersebut adalah...', options: ['A. 13 cm', 'B. 14 cm', 'C. 15 cm', 'D. 16 cm', 'E. 17 cm'], correct: 'A' },
-            { id: 24, element: 'Geometri', question: 'Sebuah roda berjari-jari 35 cm berputar sebanyak 200 kali. Jarak yang ditempuh roda tersebut adalah... (gunakan π = 22/7)', options: ['A. 220 m', 'B. 440 m', 'C. 660 m', 'D. 880 m', 'E. 1100 m'], correct: 'B' },
-            { id: 25, element: 'Geometri', question: 'Jarak antara titik (2, 3) dan garis 3x + 4y = 5 adalah...', options: ['A. 11/5', 'B. 2', 'C. 13/5', 'D. 3', 'E. 14/5'], correct: 'C' },
-            { id: 26, element: 'Geometri', question: 'Bayangan titik A(4, -2) setelah dirotasi 90° berlawanan arah jarum jam terhadap titik pusat (0,0), kemudian dicerminkan terhadap sumbu Y adalah...', options: ['A. (-2, -4)', 'B. (2, 4)', 'C. (-2, 4)', 'D. (4, 2)', 'E. (-4, -2)'], correct: 'B' },
+            { id: 23, element: 'Geometri', type: 'single-choice', question: 'Diketahui persegi panjang memiliki panjang 12 cm dan lebar 5 cm. Panjang diagonal persegi panjang tersebut adalah...', options: ['A. 13 cm', 'B. 14 cm', 'C. 15 cm', 'D. 16 cm', 'E. 17 cm'], correct: 'A' },
+            { id: 24, element: 'Geometri', type: 'single-choice', question: 'Sebuah roda berjari-jari 35 cm berputar sebanyak 200 kali. Jarak yang ditempuh roda tersebut adalah... (gunakan $\\pi = 22/7$)', options: ['A. 220 m', 'B. 440 m', 'C. 660 m', 'D. 880 m', 'E. 1100 m'], correct: 'B' },
+            { id: 25, element: 'Geometri', type: 'multi-choice', question: 'Pilih semua persamaan berikut yang merepresentasikan garis lurus.', options: ['A. $y = 3x^2 + 1$', 'B. $3x + 4y = 5$', 'C. $y = 5x$', 'D. $x^2 + y^2 = 16$'], correct: ['B', 'C'] },
+            { id: 26, element: 'Geometri', type: 'single-choice', question: 'Bayangan titik $A(4, -2)$ setelah dirotasi $90^\\circ$ berlawanan arah jarum jam terhadap titik pusat $(0,0)$, kemudian dicerminkan terhadap sumbu Y adalah...', options: ['A. $(-2, -4)$', 'B. $(2, 4)$', 'C. $(-2, 4)$', 'D. $(4, 2)$', 'E. $(-4, -2)$'], correct: 'B' },
             // ELEMEN 4: TRIGONOMETRI (2 SOAL)
-            { id: 27, element: 'Trigonometri', question: 'Nilai dari sin 60° + cos 30° - tan 45° adalah...', options: ['A. 0', 'B. 1', 'C. √3 - 1', 'D. √3 + 1', 'E. √3'], correct: 'C' },
-            { id: 28, element: 'Trigonometri', question: 'Dalam segitiga siku-siku ABC dengan siku-siku di B, jika sin A = 5/13, maka nilai tan C adalah...', options: ['A. 12/5', 'B. 5/12', 'C. 13/5', 'D. 12/13', 'E. 5/13'], correct: 'B' },
+            { id: 27, element: 'Trigonometri', type: 'single-choice', question: 'Nilai dari $\\sin 60^\\circ + \\cos 30^\\circ - \\tan 45^\\circ$ adalah...', options: ['A. 0', 'B. 1', 'C. $\\sqrt{3} - 1$', 'D. $\\sqrt{3} + 1$', 'E. $\\sqrt{3}$'], correct: 'C' },
+            { id: 28, element: 'Trigonometri', type: 'true-false', question: 'Pernyataan: Dalam segitiga siku-siku, nilai $\\sin 30^\\circ$ sama dengan nilai $\\cos 60^\\circ$.', correct: 'A' }, // A. Benar
             // ELEMEN 5: DATA DAN PELUANG (2 SOAL)
-            { id: 29, element: 'Data & Peluang', question: 'Rata-rata (mean) dari data: 4, 6, 7, 7, 8, 9, 10 adalah...', options: ['A. 6', 'B. 7', 'C. 7,5', 'D. 8', 'E. 8,5'], correct: 'B' },
-            { id: 30, element: 'Data & Peluang', question: 'Dari 5 siswa putra dan 4 siswa putri, akan dipilih 3 siswa untuk mengikuti lomba. Banyaknya cara memilih jika harus ada 2 siswa putra adalah...', options: ['A. 20 cara', 'B. 40 cara', 'C. 60 cara', 'D. 80 cara', 'E. 100 cara'], correct: 'B' },
+            { id: 29, element: 'Data & Peluang', type: 'single-choice', question: 'Rata-rata (mean) dari data: 4, 6, 7, 7, 8, 9, 10 adalah...', options: ['A. 6', 'B. 7', 'C. 7,5', 'D. 8', 'E. 8,5'], correct: 'B' },
+            { id: 30, element: 'Data & Peluang', type: 'single-choice', question: 'Dari 5 siswa putra dan 4 siswa putri, akan dipilih 3 siswa untuk mengikuti lomba. Banyaknya cara memilih jika harus ada 2 siswa putra adalah...', options: ['A. 20 cara', 'B. 40 cara', 'C. 60 cara', 'D. 80 cara', 'E. 100 cara'], correct: 'B' },
         ];
         
         const indonesianQuestions = [
-            // TEKS UNTUK SOAL 1-5 (Pemahaman Tekstual - Kata Serapan/Fenomena)
+            // TEKS A: Serapan/Fenomena (Soal 1-5)
             { type: 'text', content: '<p>Sejumlah <b>cendekiawan</b> Barat kini mulai menaruh perhatian pada filsafat Timur, khususnya tradisi kebijaksanaan yang tumbuh di Asia. Mereka menilai bahwa pendekatan rasional dan materialis yang mendominasi ilmu pengetahuan modern tidak lagi cukup untuk menjawab krisis spiritual dan ekologis global. Fenomena ini menunjukkan adanya pergeseran pandangan bahwa ilmu pengetahuan perlu <b>holistik</b>, menyentuh dimensi batin dan etika.</p><p>Salah satu konsep yang menarik perhatian adalah \'karma\' dari budaya India yang serumpun dengan \'hukum sebab-akibat\' universal. Konsep ini bukan sekadar takdir, melainkan sebuah <b>mekanisme</b> dinamis yang mendorong tanggung jawab pribadi. Adopsi konsep ini di dunia Barat sering kali mengalami <b>akulturasi</b>, diserap dalam konteks psikologis modern.</p>' },
-            { id: 1, element: 'BI', competence: 'Tekstual', question: 'Identifikasi kata serapan dari bahasa asing (Inggris) yang terdapat dalam paragraf pertama!', options: ['A. Cendekiawan', 'B. Filsafat', 'C. Holistik', 'D. Spiritual', 'E. Asia'], correct: 'C' },
-            { id: 2, element: 'BI', competence: 'Tekstual', question: 'Kata serapan \'mekanisme\' berasal dari bahasa asing dan digunakan dalam bidang...', options: ['A. Sains dan teknologi', 'B. Agama dan kepercayaan', 'C. Sosial dan budaya', 'D. Politik dan hukum', 'E. Ekonomi dan bisnis'], correct: 'A' },
-            { id: 3, element: 'BI', competence: 'Tekstual', question: 'Apa makna kata \'holistik\' dalam konteks yang digunakan penulis pada paragraf pertama?', options: ['A. Bersifat parsial dan terpisah', 'B. Menyeluruh dan saling terkait', 'C. Berfokus pada aspek rasional', 'D. Mengutamakan dimensi material', 'E. Berdasarkan dogma tertentu'], correct: 'B' },
-            { id: 4, element: 'BI', competence: 'Tekstual', question: 'Kata \'akulturasi\' dalam paragraf kedua dapat diidentifikasi sebagai serapan dari bahasa...', options: ['A. Belanda', 'B. Sansekerta', 'C. Inggris', 'D. Arab', 'E. Mandarin'], correct: 'C' },
-            { id: 5, element: 'BI', competence: 'Tekstual', question: 'Gagasan pokok pada paragraf kedua adalah...', options: ['A. Fenomena krisis spiritual global.', 'B. Pergeseran pandangan cendekiawan Barat.', 'C. Konsep karma sebagai takdir.', 'D. Adopsi dan penyerapan konsep \'karma\' di Barat.', 'E. Hukum sebab-akibat yang universal.'], correct: 'D' },
-            // TEKS UNTUK SOAL 6-10 (Pemahaman Inferensial)
+            { id: 1, element: 'BI', competence: 'Tekstual', type: 'single-choice', question: 'Identifikasi kata serapan dari bahasa asing (Inggris) yang terdapat dalam paragraf pertama!', options: ['A. Cendekiawan', 'B. Filsafat', 'C. Holistik', 'D. Spiritual', 'E. Asia'], correct: 'C' },
+            { id: 2, element: 'BI', competence: 'Tekstual', type: 'true-false', question: 'Pernyataan: Berdasarkan kaidah PUEBI, penulisan kata "cendekiawan" seharusnya dipisah menjadi "cende kiawan".', correct: 'B' }, // B. Salah
+            { id: 3, element: 'BI', competence: 'Tekstual', type: 'multi-choice', question: 'Pilih semua kata baku yang tepat.', options: ['A. Kualitas', 'B. Athlit', 'C. Ijazah', 'D. Analisa', 'E. Aktivitas'], correct: ['A', 'C', 'E'] },
+            { id: 4, element: 'BI', competence: 'Tekstual', type: 'single-choice', question: 'Kata \'akulturasi\' dalam paragraf kedua dapat diidentifikasi sebagai serapan dari bahasa...', options: ['A. Belanda', 'B. Sansekerta', 'C. Inggris', 'D. Arab', 'E. Mandarin'], correct: 'C' },
+            { id: 5, element: 'BI', competence: 'Tekstual', type: 'single-choice', question: 'Gagasan pokok pada paragraf kedua adalah...', options: ['A. Fenomena krisis spiritual global.', 'B. Pergeseran pandangan cendekiawan Barat.', 'C. Konsep karma sebagai takdir.', 'D. Adopsi dan penyerapan konsep \'karma\' di Barat.', 'E. Hukum sebab-akibat yang universal.'], correct: 'D' },
+            
+            // TEKS B: Pemahaman Inferensial (Soal 6-10)
             { type: 'text', content: '<p>Ekosistem terumbu karang di perairan Nusantara menghadapi ancaman serius. Suhu air laut yang meningkat akibat pemanasan global menyebabkan pemutihan karang (coral bleaching) secara massal. Meskipun terumbu karang dapat pulih, prosesnya memakan waktu puluhan tahun. Sementara itu, praktik penangkapan ikan yang merusak, seperti penggunaan bom ikan dan pukat harimau, terus berlangsung, menghancurkan struktur karang dalam sekejap. Tanpa intervensi dan regulasi yang ketat, para ahli memprediksi bahwa sebagian besar terumbu karang Indonesia akan hilang dalam dua dekade mendatang.</p>' },
-            { id: 6, element: 'BI', competence: 'Inferensial', question: 'Simpulan ide pokok paragraf tersebut adalah...', options: ['A. Peningkatan suhu laut adalah satu-satunya ancaman bagi terumbu karang.', 'B. Terumbu karang Indonesia akan hilang dalam waktu puluhan tahun.', 'C. Ancaman ganda (alami dan ulah manusia) menyebabkan krisis terumbu karang di Indonesia.', 'D. Praktik penangkapan ikan yang merusak lebih berbahaya daripada pemanasan global.', 'E. Pemerintah telah mengeluarkan regulasi yang ketat untuk melindungi karang.'], correct: 'C' },
-            { id: 7, element: 'BI', competence: 'Inferensial', question: 'Berdasarkan konteks, hubungan makna antara kalimat pertama dan kedua adalah...', options: ['A. Hubungan perbandingan', 'B. Hubungan sebab-akibat', 'C. Hubungan pertentangan', 'D. Hubungan penambahan', 'E. Hubungan syarat'], correct: 'B' },
-            { id: 8, element: 'BI', competence: 'Inferensial', question: 'Apa yang dapat disimpulkan mengenai peluang pemulihan terumbu karang Indonesia?', options: ['A. Peluangnya besar karena proses pemutihan hanya terjadi sesekali.', 'B. Peluangnya kecil karena kecepatan kerusakan lebih tinggi daripada kecepatan pemulihan alami.', 'C. Pemulihan akan terjadi secara otomatis dalam lima tahun.', 'D. Pemulihan hanya tergantung pada suhu air laut.', 'E. Regulasi ketat sudah berhasil menjamin pemulihan.'], correct: 'B' },
-            { id: 9, element: 'BI', competence: 'Inferensial', question: 'Jika diasumsikan regulasi ketat segera diberlakukan dan ditegakkan, prediksi lanjutan uraian adalah...', options: ['A. Kerusakan terumbu karang akan berhenti total dalam setahun.', 'B. Proses pemulihan akan mulai berjalan, meskipun ancaman pemanasan global tetap ada.', 'C. Suhu air laut akan otomatis menurun drastis.', 'D. Semua praktik penangkapan ikan yang merusak akan menghilang.', 'E. Terumbu karang akan langsung kembali ke kondisi semula.'], correct: 'B' },
-            { id: 10, element: 'BI', competence: 'Inferensial', question: 'Latar fenomena yang dijelaskan dalam teks tersebut secara dominan adalah...', options: ['A. Latar sosial-ekonomi', 'B. Latar politik-hukum', 'C. Latar geografi dan ekologi', 'D. Latar sejarah maritim', 'E. Latar budaya masyarakat pesisir'], correct: 'C' },
-            // TEKS UNTUK SOAL 11-15 (Evaluasi dan Apresiasi - Relevansi/Kesesuaian)
+            { id: 6, element: 'BI', competence: 'Inferensial', type: 'single-choice', question: 'Simpulan ide pokok paragraf tersebut adalah...', options: ['A. Peningkatan suhu laut adalah satu-satunya ancaman bagi terumbu karang.', 'B. Terumbu karang Indonesia akan hilang dalam waktu puluhan tahun.', 'C. Ancaman ganda (alami dan ulah manusia) menyebabkan krisis terumbu karang di Indonesia.', 'D. Praktik penangkapan ikan yang merusak lebih berbahaya daripada pemanasan global.', 'E. Pemerintah telah mengeluarkan regulasi yang ketat untuk melindungi karang.'], correct: 'C' },
+            { id: 7, element: 'BI', competence: 'Inferensial', type: 'true-false', question: 'Pernyataan: Teks tersebut berjenis eksposisi karena bertujuan meyakinkan pembaca untuk bertindak.', correct: 'B' }, // B. Salah
+            { id: 8, element: 'BI', competence: 'Inferensial', type: 'single-choice', question: 'Apa yang dapat disimpulkan mengenai peluang pemulihan terumbu karang Indonesia?', options: ['A. Peluangnya besar karena proses pemutihan hanya terjadi sesekali.', 'B. Peluangnya kecil karena kecepatan kerusakan lebih tinggi daripada kecepatan pemulihan alami.', 'C. Pemulihan akan terjadi secara otomatis dalam lima tahun.', 'D. Pemulihan hanya tergantung pada suhu air laut.', 'E. Regulasi ketat sudah berhasil menjamin pemulihan.'], correct: 'B' },
+            { id: 9, element: 'BI', competence: 'Inferensial', type: 'single-choice', question: 'Jika diasumsikan regulasi ketat segera diberlakukan dan ditegakkan, prediksi lanjutan uraian adalah...', options: ['A. Kerusakan terumbu karang akan berhenti total dalam setahun.', 'B. Proses pemulihan akan mulai berjalan, meskipun ancaman pemanasan global tetap ada.', 'C. Suhu air laut akan otomatis menurun drastis.', 'D. Semua praktik penangkapan ikan yang merusak akan menghilang.', 'E. Terumbu karang akan langsung kembali ke kondisi semula.'], correct: 'B' },
+            { id: 10, element: 'BI', competence: 'Inferensial', type: 'single-choice', question: 'Latar fenomena yang dijelaskan dalam teks tersebut secara dominan adalah...', options: ['A. Latar sosial-ekonomi', 'B. Latar politik-hukum', 'C. Latar geografi dan ekologi', 'D. Latar sejarah maritim', 'E. Latar budaya masyarakat pesisir'], correct: 'C' },
+            
+            // TEKS C: Evaluasi dan Apresiasi (Soal 11-15)
             { type: 'text', content: '<p>Dalam sebuah cerpen, digambarkan tokoh \'Pak Tua\' yang tinggal sendirian di rumah reot tepi sungai. Setiap pagi, ia selalu membersihkan sampah di sekitar rumahnya, meskipun itu bukan sampahnya. Penulis menggunakan kata-kata sederhana, namun kuat, seperti "Senyumnya selebar sungai," saat Pak Tua melihat air sungai bersih di pagi hari. Namun, cerpen itu berakhir dengan narasi mendadak: "Tiba-tiba, Pak Tua memenangkan lotre besar dan pindah ke kota, meninggalkan semua sampah."</p>' },
-            { id: 11, element: 'BI', competence: 'Evaluasi', question: 'Menilai keakuratan informasi: Mengapa penggunaan kata "reot" untuk rumah Pak Tua dinilai akurat untuk menggambarkan karakter?', options: ['A. Menunjukkan bahwa Pak Tua tidak peduli harta.', 'B. Menunjukkan bahwa Pak Tua adalah orang kaya yang menyamar.', 'C. Menciptakan kontras antara kepeduliannya pada lingkungan dan kondisi pribadinya.', 'D. Menegaskan bahwa cerpen tersebut berlatar belakang di kota besar.', 'E. Kata "reot" adalah kata serapan yang tepat.'], correct: 'C' },
-            { id: 12, element: 'BI', competence: 'Evaluasi', question: 'Bagaimana relevansi peristiwa Pak Tua memenangkan lotre dengan kehidupan sehari-hari?', options: ['A. Sangat relevan karena setiap orang harus membersihkan sampah.', 'B. Tidak relevan, karena lotre adalah fantasi yang mustahil.', 'C. Relevan, menggambarkan bahwa kebaikan selalu dibalas secara material.', 'D. Kurang relevan, karena motivasi Pak Tua (membersihkan sampah) tidak berhubungan langsung dengan hadiah lotre.', 'E. Sangat relevan karena semua orang menginginkan kekayaan mendadak.'], correct: 'D' },
-            { id: 13, element: 'BI', competence: 'Evaluasi', question: 'Menilai kesesuaian penggunaan bahasa: Frasa "Senyumnya selebar sungai" dalam teks fiksi adalah contoh penggunaan bahasa yang...', options: ['A. Tidak baku dan tidak efektif.', 'B. Hiperbola dan memberikan efek dramatis.', 'C. Denotatif dan lugas.', 'D. Kiasan yang terlalu berlebihan dan mengganggu.', 'E. Metafora yang bersifat logis.'], correct: 'B' },
-            { id: 14, element: 'BI', competence: 'Evaluasi', question: 'Akhir cerita di mana Pak Tua meninggalkan sampah dan pindah ke kota dinilai tidak tepat untuk menggambarkan karakter awal karena...', options: ['A. Lotre terlalu mendadak.', 'B. Seharusnya Pak Tua tetap membersihkan sampah meskipun kaya.', 'C. Karakter awalnya didasarkan pada kepedulian lingkungan, bukan motivasi kekayaan.', 'D. Rumah reot tidak sesuai dengan pemenang lotre.', 'E. Sungai seharusnya menjadi sumber kekayaan bagi Pak Tua.'], correct: 'C' },
-            { id: 15, element: 'BI', competence: 'Evaluasi', question: 'Simpulkan respons emosional pembaca terhadap akhir cerita cerpen tersebut:', options: ['A. Gembira dan puas atas kebahagiaan Pak Tua.', 'B. Lega karena Pak Tua akhirnya bisa istirahat.', 'C. Merasa hampa atau kecewa karena nilai moral cerita dikhianati.', 'D. Biasa saja karena itu hanya cerita fiksi.', 'E. Terinspirasi untuk memenangkan lotre.'], correct: 'C' },
-            // SOAL 16-30 (Campuran dari semua kompetensi)
+            { id: 11, element: 'BI', competence: 'Evaluasi', type: 'single-choice', question: 'Menilai keakuratan informasi: Mengapa penggunaan kata "reot" untuk rumah Pak Tua dinilai akurat untuk menggambarkan karakter?', options: ['A. Menunjukkan bahwa Pak Tua tidak peduli harta.', 'B. Menunjukkan bahwa Pak Tua adalah orang kaya yang menyamar.', 'C. Menciptakan kontras antara kepeduliannya pada lingkungan dan kondisi pribadinya.', 'D. Menegaskan bahwa cerpen tersebut berlatar belakang di kota besar.', 'E. Kata "reot" adalah kata serapan yang tepat.'], correct: 'C' },
+            { id: 12, element: 'BI', competence: 'Evaluasi', type: 'true-false', question: 'Pernyataan: Akhir cerita ini menggunakan teknik plot twist yang efektif dalam membangun motivasi tokoh.', correct: 'B' }, // B. Salah
+            { id: 13, element: 'BI', competence: 'Evaluasi', type: 'single-choice', question: 'Menilai kesesuaian penggunaan bahasa: Frasa "Senyumnya selebar sungai" dalam teks fiksi adalah contoh penggunaan bahasa yang...', options: ['A. Tidak baku dan tidak efektif.', 'B. Hiperbola dan memberikan efek dramatis.', 'C. Denotatif dan lugas.', 'D. Kiasan yang terlalu berlebihan dan mengganggu.', 'E. Metafora yang bersifat logis.'], correct: 'B' },
+            { id: 14, element: 'BI', competence: 'Evaluasi', type: 'single-choice', question: 'Akhir cerita di mana Pak Tua meninggalkan sampah dan pindah ke kota dinilai tidak tepat untuk menggambarkan karakter awal karena...', options: ['A. Lotre terlalu mendadak.', 'B. Seharusnya Pak Tua tetap membersihkan sampah meskipun kaya.', 'C. Karakter awalnya didasarkan pada kepedulian lingkungan, bukan motivasi kekayaan.', 'D. Rumah reot tidak sesuai dengan pemenang lotre.', 'E. Sungai seharusnya menjadi sumber kekayaan bagi Pak Tua.'], correct: 'C' },
+            { id: 15, element: 'BI', competence: 'Evaluasi', type: 'single-choice', question: 'Simpulkan respons emosional pembaca terhadap akhir cerita cerpen tersebut:', options: ['A. Gembira dan puas atas kebahagiaan Pak Tua.', 'B. Lega karena Pak Tua akhirnya bisa istirahat.', 'C. Merasa hampa atau kecewa karena nilai moral cerita dikhianati.', 'D. Biasa saja karena itu hanya cerita fiksi.', 'E. Terinspirasi untuk memenangkan lotre.'], correct: 'C' },
+            
+            // TEKS D: Kutipan Cerpen Stasiun (Soal 16-18)
             { type: 'text', content: '<p>Angin di pelataran stasiun berembus dingin, membawa aroma hujan yang belum tuntas. Nina duduk sendirian, memeluk tas lusuh berisi ijazah yang kini terasa seberat batu. Sudah dua bulan ia mencari, tetapi setiap pintu perusahaan terasa tertutup oleh dinding kawat yang tak terlihat. Tiba-tiba, seorang kakek tua berseragam petugas kebersihan mendekatinya, menawarkan secangkir teh hangat. "Jangan lekas menyerah, Nak. Bahkan rel kereta yang panjang pun pasti punya ujungnya," ujar Kakek itu sambil tersenyum tulus.</p>' },
-            { id: 16, element: 'BI', competence: 'Inferensial', question: 'Tokoh \'Kakek tua\' dalam kutipan tersebut dapat disimpulkan memiliki karakter...', options: ['A. Pendiam dan cuek', 'B. Apatis dan pemarah', 'C. Bijaksana dan empati', 'D. Sombong dan angkuh', 'E. Curiga dan tertutup'], correct: 'C' },
-            { id: 17, element: 'BI', competence: 'Inferensial', question: 'Makna yang tersirat dari kalimat "rel kereta yang panjang pun pasti punya ujungnya" adalah...', options: ['A. Semua masalah akan berakhir pada waktunya.', 'B. Rel kereta adalah simbol perjalanan hidup.', 'C. Nina harus naik kereta untuk mencari pekerjaan.', 'D. Kakek tua adalah mantan masinis kereta.', 'E. Perjalanan Nina akan segera dimulai.'], correct: 'A' },
-            { id: 18, element: 'BI', competence: 'Evaluasi', question: 'Latar waktu yang paling tepat digambarkan dalam kutipan tersebut adalah...', options: ['A. Sore menjelang malam', 'B. Siang hari yang terik', 'C. Pagi hari yang cerah', 'D. Tengah malam yang sunyi', 'E. Petang hari yang ramai'], correct: 'A' },
+            { id: 16, element: 'BI', competence: 'Inferensial', type: 'single-choice', question: 'Tokoh \'Kakek tua\' dalam kutipan tersebut dapat disimpulkan memiliki karakter...', options: ['A. Pendiam dan cuek', 'B. Apatis dan pemarah', 'C. Bijaksana dan empati', 'D. Sombong dan angkuh', 'E. Curiga dan tertutup'], correct: 'C' },
+            { id: 17, element: 'BI', competence: 'Inferensial', type: 'single-choice', question: 'Makna yang tersirat dari kalimat "rel kereta yang panjang pun pasti punya ujungnya" adalah...', options: ['A. Semua masalah akan berakhir pada waktunya.', 'B. Rel kereta adalah simbol perjalanan hidup.', 'C. Nina harus naik kereta untuk mencari pekerjaan.', 'D. Kakek tua adalah mantan masinis kereta.', 'E. Perjalanan Nina akan segera dimulai.'], correct: 'A' },
+            { id: 18, element: 'BI', competence: 'Evaluasi', type: 'single-choice', question: 'Latar waktu yang paling tepat digambarkan dalam kutipan tersebut adalah...', options: ['A. Sore menjelang malam', 'B. Siang hari yang terik', 'C. Pagi hari yang cerah', 'D. Tengah malam yang sunyi', 'E. Petang hari yang ramai'], correct: 'A' },
+
+            // TEKS E: AI dan Regulasi (Soal 19-21)
             { type: 'text', content: '<p>Kecerdasan Buatan (AI) kini telah memasuki fase baru, bergerak dari alat bantu menjadi pengambil keputusan otonom. Di sektor manufaktur, misalnya, AI mengelola rantai pasokan dan memprediksi kerusakan mesin, menghasilkan efisiensi waktu yang signifikan. Namun, muncul kekhawatiran etika: apakah keputusan yang dibuat oleh algoritma benar-benar adil? Para pakar menyarankan pentingnya regulasi global yang menjamin transparansi algoritma (explainability) sebagai prasyarat utama sebelum AI diserahkan tanggung jawab penuh.</p>' },
-            { id: 19, element: 'BI', competence: 'Tekstual', question: 'Kata serapan \'algoritma\' dan \'regulasi\' dalam teks tersebut diserap dari bahasa asing, masing-masing adalah...', options: ['A. Yunani dan Latin', 'B. Arab dan Inggris', 'C. Inggris dan Latin', 'D. Sansekerta dan Arab', 'E. Belanda dan Inggris'], correct: 'C' },
-            { id: 20, element: 'BI', competence: 'Inferensial', question: 'Menjelaskan hubungan: Kalimat terakhir dalam teks merupakan hubungan...', options: ['A. Perbandingan', 'B. Saran atau rekomendasi', 'C. Penyebab dan akibat', 'D. Penambahan fakta', 'E. Kontradiksi'], correct: 'B' },
-            { id: 21, element: 'BI', competence: 'Inferensial', question: 'Implikasi dari "efisiensi waktu yang signifikan" di sektor manufaktur adalah...', options: ['A. Peningkatan jumlah pekerja.', 'B. Penurunan investasi teknologi.', 'C. Proses produksi menjadi lebih cepat dan hemat biaya.', 'D. AI menjadi tidak diperlukan lagi.', 'E. Semua mesin akan rusak lebih cepat.'], correct: 'C' },
-            { id: 22, element: 'BI', competence: 'Tekstual', question: 'Pilihlah kalimat yang menggunakan kata serapan dari bahasa daerah!', options: ['A. Paman membeli karcis di loket stasiun.', 'B. Ia merasa cemas dengan masa depannya.', 'C. Anak itu sangat gembira setelah mendapat hadiah.', 'D. Ibu membuat kue lapis yang legit sekali.', 'E. Kami berdiskusi tentang masalah ekonomi makro.'], correct: 'D' },
-            { id: 23, element: 'BI', competence: 'Evaluasi', question: 'Penggunaan kata \'otonom\' untuk menggambarkan pengambil keputusan dalam AI (Soal 19) dinilai...', options: ['A. Tidak tepat, karena AI tidak punya akal.', 'B. Tepat, karena AI bertindak mandiri tanpa intervensi manusia.', 'C. Salah, karena seharusnya menggunakan kata \'otomatis\'.', 'D. Berlebihan, karena hanya mesin sederhana.', 'E. Baku, tapi maknanya kurang jelas.'], correct: 'B' },
-            { id: 24, element: 'BI', competence: 'Tekstual', question: 'Langkah pertama dalam menyusun kerangka teks nonfiksi adalah...', options: ['A. Menuliskan semua gagasan pendukung.', 'B. Mengidentifikasi ide pokok setiap paragraf.', 'C. Menentukan judul yang menarik.', 'D. Membuat kesimpulan awal.', 'E. Mencari sumber referensi baru.'], correct: 'B' },
-            { id: 25, element: 'BI', competence: 'Inferensial', question: 'Prediksi lanjutan dari teks yang membahas penurunan drastis kualitas udara di suatu kota tanpa adanya perubahan kebijakan adalah...', options: ['A. Kualitas udara akan membaik secara alami.', 'B. Jumlah penduduk akan meningkat pesat.', 'C. Masalah kesehatan pernapasan warga akan meningkat tajam.', 'D. Tingkat ekonomi kota akan melonjak.', 'E. Tidak akan ada dampak signifikan.'], correct: 'C' },
-            { id: 26, element: 'BI', competence: 'Evaluasi', question: 'Menilai kesesuaian penggunaan bahasa: Dalam pidato resmi, penggunaan frasa "kita kudu kerja keras" dianggap kurang tepat dan seharusnya diganti menjadi...', options: ['A. Kita harus kerja keras', 'B. Kami harus kerja keras', 'C. Kita wajib bekerja keras', 'D. Kami wajib bekerja keras', 'E. Kita mesti kudu bekerja keras'], correct: 'C' },
-            { id: 27, element: 'BI', competence: 'Inferensial', question: 'Jika tokoh protagonis dalam drama memutuskan untuk tidak membalas dendam meskipun ia dirugikan, nilai moral yang dapat disimpulkan adalah...', options: ['A. Kepasrahan', 'B. Keadilan', 'C. Ketidakmampuan', 'D. Pemaafan', 'E. Keberanian'], correct: 'D' },
-            { id: 28, element: 'BI', competence: 'Evaluasi', question: 'Manakah nilai-nilai kehidupan sehari-hari yang paling relevan dengan kisah seorang anak yang menabung demi membeli hadiah untuk ibunya?', options: ['A. Kepuasan instan', 'B. Materialisme', 'C. Pengorbanan dan kasih sayang', 'D. Kemandirian finansial', 'E. Keangkuhan'], correct: 'C' },
-            { id: 29, element: 'BI', competence: 'Tekstual', question: 'Kosakata yang tepat untuk menggambarkan suasana \'terlalu ramai dan sesak\' di sebuah pasar adalah...', options: ['A. Senyap', 'B. Meriah', 'C. Riuh', 'D. Sunyi', 'E. Lengang'], correct: 'C' },
-            { id: 30, element: 'BI', competence: 'Inferensial', question: 'Hubungan antara paragraf yang membahas masalah dan paragraf yang menyajikan solusi dalam teks nonfiksi adalah...', options: ['A. Kontradiktif', 'B. Kohesif', 'C. Kausalitas', 'D. Evaluatif', 'E. Ekspositori'], correct: 'B' },
+            { id: 19, element: 'BI', competence: 'Tekstual', type: 'single-choice', question: 'Kata serapan \'algoritma\' dan \'regulasi\' dalam teks tersebut diserap dari bahasa asing, masing-masing adalah...', options: ['A. Yunani dan Latin', 'B. Arab dan Inggris', 'C. Inggris dan Latin', 'D. Sansekerta dan Arab', 'E. Belanda dan Inggris'], correct: 'C' },
+            { id: 20, element: 'BI', competence: 'Inferensial', type: 'true-false', question: 'Pernyataan: Menurut teks, transparansi algoritma (explainability) harus ada setelah AI diserahkan tanggung jawab penuh.', correct: 'B' }, // B. Salah (prasyarat utama sebelum diserahkan tanggung jawab penuh)
+            { id: 21, element: 'BI', competence: 'Inferensial', type: 'single-choice', question: 'Implikasi dari "efisiensi waktu yang signifikan" di sektor manufaktur adalah...', options: ['A. Peningkatan jumlah pekerja.', 'B. Penurunan investasi teknologi.', 'C. Proses produksi menjadi lebih cepat dan hemat biaya.', 'D. AI menjadi tidak diperlukan lagi.', 'E. Semua mesin akan rusak lebih cepat.'], correct: 'C' },
+            
+            // Sisanya tetap soal tunggal tanpa teks konteks
+            { id: 22, element: 'BI', competence: 'Tekstual', type: 'single-choice', question: 'Pilihlah kalimat yang menggunakan kata serapan dari bahasa daerah!', options: ['A. Paman membeli karcis di loket stasiun.', 'B. Ia merasa cemas dengan masa depannya.', 'C. Anak itu sangat gembira setelah mendapat hadiah.', 'D. Ibu membuat kue lapis yang legit sekali.', 'E. Kami berdiskusi tentang masalah ekonomi makro.'], correct: 'D' },
+            { id: 23, element: 'BI', competence: 'Evaluasi', type: 'single-choice', question: 'Penggunaan kata \'otonom\' untuk menggambarkan pengambil keputusan dalam AI (Soal 19) dinilai...', options: ['A. Tidak tepat, karena AI tidak punya akal.', 'B. Tepat, karena AI bertindak mandiri tanpa intervensi manusia.', 'C. Salah, karena seharusnya menggunakan kata \'otomatis\'.', 'D. Berlebihan, karena hanya mesin sederhana.', 'E. Baku, tapi maknanya kurang jelas.'], correct: 'B' },
+            { id: 24, element: 'BI', competence: 'Tekstual', type: 'single-choice', question: 'Langkah pertama dalam menyusun kerangka teks nonfiksi adalah...', options: ['A. Menuliskan semua gagasan pendukung.', 'B. Mengidentifikasi ide pokok setiap paragraf.', 'C. Menentukan judul yang menarik.', 'D. Membuat kesimpulan awal.', 'E. Mencari sumber referensi baru.'], correct: 'B' },
+            { id: 25, element: 'BI', competence: 'Inferensial', type: 'multi-choice', question: 'Pilih semua jenis teks yang bertujuan untuk memberikan informasi faktual dan objektif (Bukan fiksi).', options: ['A. Cerpen', 'B. Jurnal Ilmiah', 'C. Berita Utama', 'D. Novel Fantasi', 'E. Laporan Penelitian'], correct: ['B', 'C', 'E'] },
+            { id: 26, element: 'BI', competence: 'Evaluasi', type: 'single-choice', question: 'Menilai kesesuaian penggunaan bahasa: Dalam pidato resmi, penggunaan frasa "kita kudu kerja keras" dianggap kurang tepat dan seharusnya diganti menjadi...', options: ['A. Kita harus kerja keras', 'B. Kami harus kerja keras', 'C. Kita wajib bekerja keras', 'D. Kami wajib bekerja keras', 'E. Kita mesti kudu bekerja keras'], correct: 'C' },
+            { id: 27, element: 'BI', competence: 'Inferensial', type: 'single-choice', question: 'Jika tokoh protagonis dalam drama memutuskan untuk tidak membalas dendam meskipun ia dirugikan, nilai moral yang dapat disimpulkan adalah...', options: ['A. Kepasrahan', 'B. Keadilan', 'C. Ketidakmampuan', 'D. Pemaafan', 'E. Keberanian'], correct: 'D' },
+            { id: 28, element: 'BI', competence: 'Evaluasi', type: 'single-choice', question: 'Manakah nilai-nilai kehidupan sehari-hari yang paling relevan dengan kisah seorang anak yang menabung demi membeli hadiah untuk ibunya?', options: ['A. Kepuasan instan', 'B. Materialisme', 'C. Pengorbanan dan kasih sayang', 'D. Kemandirian finansial', 'E. Keangkuhan'], correct: 'C' },
+            { id: 29, element: 'BI', competence: 'Tekstual', type: 'single-choice', question: 'Kosakata yang tepat untuk menggambarkan suasana \'terlalu ramai dan sesak\' di sebuah pasar adalah...', options: ['A. Senyap', 'B. Meriah', 'C. Riuh', 'D. Sunyi', 'E. Lengang'], correct: 'C' },
+            { id: 30, element: 'BI', competence: 'Inferensial', type: 'single-choice', question: 'Hubungan antara paragraf yang membahas masalah dan paragraf yang menyajikan solusi dalam teks nonfiksi adalah...', options: ['A. Kontradiktif', 'B. Kohesif', 'C. Kausalitas', 'D. Evaluatif', 'E. Ekspositori'], correct: 'B' },
 
         ];
         
         const englishQuestions = [
-            // TEKS 1: TEKSTUAL (Explicit Information, Classification, Summarizing)
+            // TEKS 1: Vertical Farms (Soal 31-35)
             { type: 'text', content: `<p><strong>Text 1: The Emergence of Vertical Farms</strong></p>
                 <p>Vertical farms represent a revolutionary shift in agriculture, addressing issues of urban food security and limited arable land. These indoor facilities, often multi-story, grow crops in stacked layers under controlled environmental conditions. Unlike traditional farms, vertical farms use hydroponics or aeroponics, significantly reducing water consumption by up to 95%. The production process eliminates the need for pesticides, leading to healthier, contamination-free produce. However, the initial capital investment and energy consumption for lighting systems remain the biggest economic barriers to widespread adoption.</p>`
             },
-            { id: 31, element: 'ING', competence: 'Tekstual', question: 'What is the primary method of growing crops mentioned in vertical farms?', options: ['A. Traditional soil planting', 'B. Using large amounts of pesticides', 'C. Hydroponics or aeroponics', 'D. Relying heavily on natural sunlight', 'E. Using 95% more water than conventional methods'], correct: 'C' },
-            { id: 32, element: 'ING', competence: 'Tekstual', question: 'According to the text, which of the following is categorized as an economic barrier to vertical farming?', options: ['A. Limited arable land', 'B. Reduced water consumption', 'C. Lack of pesticides', 'D. High energy consumption for lighting', 'E. Urban food security'], correct: 'D' },
-            { id: 33, element: 'ING', competence: 'Tekstual', question: 'What explicit benefit of vertical farming is mentioned regarding health?', options: ['A. Increased crop yield', 'B. Elimination of pesticides', 'C. Faster growth cycle', 'D. Lower capital cost', 'E. Reduced transportation distance'], correct: 'B' },
-            { id: 34, element: 'ING', competence: 'Tekstual', question: 'Which statement accurately summarizes the water usage in vertical farms compared to traditional farming?', options: ['A. They use the same amount of water.', 'B. They increase water usage by 95%.', 'C. They reduce water consumption by up to 95%.', 'D. Water usage is eliminated entirely.', 'E. Water consumption is the main economic barrier.'], correct: 'C' },
-            { id: 35, element: 'ING', competence: 'Tekstual', question: 'If the text were part of a larger report, which section title would best fit the content of the paragraph above?', options: ['A. Global Warming and Its Impact', 'B. The Cost of Traditional Farming', 'C. Methods and Challenges of Vertical Agriculture', 'D. Future of Pest Control', 'E. Energy Consumption Trends'], correct: 'C' },
+            { id: 31, element: 'ING', competence: 'Tekstual', type: 'single-choice', question: 'What is the primary method of growing crops mentioned in vertical farms?', options: ['A. Traditional soil planting', 'B. Using large amounts of pesticides', 'C. Hydroponics or aeroponics', 'D. Relying heavily on natural sunlight', 'E. Using 95% more water than conventional methods'], correct: 'C' },
+            { id: 32, element: 'ING', competence: 'Tekstual', type: 'true-false', question: 'Statement: Vertical farms significantly increase water usage compared to traditional farming.', correct: 'B' }, // B. False (it reduces by 95%)
+            { id: 33, element: 'ING', competence: 'Tekstual', type: 'multi-choice', question: 'Which two factors are described as the main economic barriers to vertical farming? (Select two correct options)', options: ['A. Limited arable land', 'B. High initial capital investment', 'C. Reduced water consumption', 'D. High energy consumption for lighting', 'E. Urban food security'], correct: ['B', 'D'] },
+            { id: 34, element: 'ING', competence: 'Tekstual', type: 'single-choice', question: 'Which statement accurately summarizes the water usage in vertical farms compared to traditional farming?', options: ['A. They use the same amount of water.', 'B. They increase water usage by 95%.', 'C. They reduce water consumption by up to 95%.', 'D. Water usage is eliminated entirely.', 'E. Water consumption is the main economic barrier.'], correct: 'C' },
+            { id: 35, element: 'ING', competence: 'Tekstual', type: 'single-choice', question: 'If the text were part of a larger report, which section title would best fit the content of the paragraph above?', options: ['A. Global Warming and Its Impact', 'B. The Cost of Traditional Farming', 'C. Methods and Challenges of Vertical Agriculture', 'D. Future of Pest Control', 'E. Energy Consumption Trends'], correct: 'C' },
 
-            // TEKS 2: INFERENSIAL (Topic, Purpose, Cause-Effect, Comparison)
+            // TEKS 2: Digital Nomadism (Soal 36-40)
             { type: 'text', content: `<p><strong>Text 2: The Two Sides of Digital Nomadism</strong></p>
                 <p>Digital nomadism, the practice of working remotely while traveling, has soared in popularity, especially among young professionals. Its appeal lies primarily in the freedom of movement and the ability to maintain a city income while living in a low-cost country. However, this lifestyle often creates an "expat bubble"—a community detached from the local culture, leading to social isolation from host communities. Furthermore, many host cities struggle with rising rents due to the influx of high-earning foreign workers, an economic effect rarely intended by the travelers themselves.</p>`
             },
-            { id: 36, element: 'ING', competence: 'Inferensial', question: 'What is the inferred topic of the entire text?', options: ['A. The rise of tourism in Southeast Asia.', 'B. The economic benefits of remote work.', 'C. The multifaceted societal impact of the digital nomad trend.', 'D. Ways to save money while traveling.', 'E. The best places for young professionals to retire.'], correct: 'C' },
-            { id: 37, element: 'ING', competence: 'Inferensial', question: 'The author\'s primary purpose in writing this text is to...', options: ['A. Persuade readers to become digital nomads.', 'B. Explain the basic requirements for remote work.', 'C. Criticize the host countries for not adapting.', 'D. Present a balanced view of the advantages and unintended consequences of digital nomadism.', 'E. Promote high-earning jobs for young professionals.'], correct: 'D' },
-            { id: 38, element: 'ING', competence: 'Inferensial', question: 'What is the implied cause of rising rents in host cities?', options: ['A. A lack of interest in local culture from nomads.', 'B. The host cities\' poor economic planning.', 'C. The high earning power of digital nomads relative to local wages.', 'D. The difficulty nomads have finding accommodation.', 'E. The desire of nomads to live in isolated bubbles.'], correct: 'C' },
-            { id: 39, element: 'ING', competence: 'Inferensial', question: 'The description of the "expat bubble" primarily functions to illustrate a comparison between...', options: ['A. High-cost and low-cost countries.', 'B. Freedom of movement and stability.', 'C. Nomads\' professional lives and their travel goals.', 'D. The intended and unintended social aspects of the lifestyle.', 'E. Local culture and international business.'], correct: 'D' },
-            { id: 40, element: 'ING', competence: 'Inferensial', question: 'What can be inferred about the typical income of a digital nomad compared to the average local resident in the host country?', options: ['A. It is significantly lower.', 'B. It is about the same, balancing costs.', 'C. It is typically higher.', 'D. The text provides no basis for comparison.', 'E. Their income only affects local tourism.'], correct: 'C' },
+            { id: 36, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'What is the inferred topic of the entire text?', options: ['A. The rise of tourism in Southeast Asia.', 'B. The economic benefits of remote work.', 'C. The multifaceted societal impact of the digital nomad trend.', 'D. Ways to save money while traveling.', 'E. The best places for young professionals to retire.'], correct: 'C' },
+            { id: 37, element: 'ING', competence: 'Inferensial', type: 'true-false', question: 'Statement: The expat bubble phenomenon intentionally leads to social isolation from local communities.', correct: 'B' }, // B. False (it's an unintended consequence)
+            { id: 38, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'What is the implied cause of rising rents in host cities?', options: ['A. A lack of interest in local culture from nomads.', 'B. The host cities\' poor economic planning.', 'C. The high earning power of digital nomads relative to local wages.', 'D. The difficulty nomads have finding accommodation.', 'E. The desire of nomads to live in isolated bubbles.'], correct: 'C' },
+            { id: 39, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'The description of the "expat bubble" primarily functions to illustrate a comparison between...', options: ['A. High-cost and low-cost countries.', 'B. Freedom of movement and stability.', 'C. Nomads\' professional lives and their travel goals.', 'D. The intended and unintended social aspects of the lifestyle.', 'E. Local culture and international business.'], correct: 'D' },
+            { id: 40, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'What can be inferred about the typical income of a digital nomad compared to the average local resident in the host country?', options: ['A. It is significantly lower.', 'B. It is about the same, balancing costs.', 'C. It is typically higher.', 'D. The text provides no basis for comparison.', 'E. Their income only affects local tourism.'], correct: 'C' },
 
-            // TEKS 3: EVALUASI & APRESIASI (Reality vs Fantasy, Fact vs Opinion, Validity)
+            // TEKS 3: Supply Chain Critique (Soal 41-45)
             { type: 'text', content: `<p><strong>Text 3: A Critique of the Global Supply Chain</strong></p>
-                <p>Supply chain inefficiencies are often ignored, but **I believe** they are the single greatest threat to modern commerce. A recent study by the Logistics Institute showed that 40% of goods transport time is wasted due to poor inventory coordination, **which is an astonishing figure.** Furthermore, analysts argue that while blockchain technology **can potentially** solve many transparency issues, most corporations are too risk-averse to adopt it universally. Thus, the industry continues to rely on legacy systems that are slow and vulnerable. **It is highly likely** that the next global economic crisis will be triggered not by banks, but by a massive supply chain failure.</p>`
+                <p>Supply chain inefficiencies are often ignored, but <strong>I believe</strong> they are the single greatest threat to modern commerce. A recent study by the Logistics Institute showed that 40% of goods transport time is wasted due to poor inventory coordination, <strong>which is an astonishing figure.</strong> Furthermore, analysts argue that while blockchain technology <strong>can potentially</strong> solve many transparency issues, most corporations are too risk-averse to adopt it universally. Thus, the industry continues to rely on legacy systems that are slow and vulnerable. <strong>It is highly likely</strong> that the next global economic crisis will be triggered not by banks, but by a massive supply chain failure.</p>`
             },
-            { id: 41, element: 'ING', competence: 'Evaluasi', question: 'Which sentence from the text expresses an **opinion** rather than a factual statement?', options: ['A. Supply chain inefficiencies are often ignored.', 'B. A recent study showed that 40% of goods transport time is wasted.', 'C. I believe they are the single greatest threat to modern commerce.', 'D. Analysts argue that blockchain technology can potentially solve many issues.', 'E. The industry continues to rely on legacy systems.'], correct: 'C' },
-            { id: 42, element: 'ING', competence: 'Evaluasi', question: 'The statement "40% of goods transport time is wasted" would be considered a valid piece of information if...', options: ['A. It aligns with the author\'s personal belief.', 'B. The Logistics Institute is a recognized and credible source.', 'C. The number 40% is appealing to the general reader.', 'D. The author provides a vivid description of the wasted time.', 'E. It supports the conclusion about the economic crisis.'], correct: 'B' },
-            { id: 43, element: 'ING', competence: 'Evaluasi', question: 'The phrase "It is highly likely that the next global economic crisis will be triggered..." is an example of the author attempting to...', options: ['A. Provide a verifiable historical fact.', 'B. Offer an established, undisputed academic theory.', 'C. Influence the reader by expressing a strong, speculative prediction.', 'D. Demonstrate the reality of supply chain management.', 'E. Clarify the definition of a supply chain failure.'], correct: 'C' },
-            { id: 44, element: 'ING', competence: 'Apresiasi', question: 'The author\'s overall tone in Text 3 can best be described as...', options: ['A. Indifferent and neutral.', 'B. Highly optimistic and cheerful.', 'C. Critical and apprehensive.', 'D. Whimsical and nostalgic.', 'E. Humorous and lighthearted.'], correct: 'C' },
-            { id: 45, element: 'ING', competence: 'Evaluasi', question: 'If the text had stated that a supply chain crisis was caused by space-faring aliens, this would be an example of...', options: ['A. A realistic prediction.', 'B. An accurate scientific fact.', 'C. A fantastical element.', 'D. A well-supported hypothesis.', 'E. A minor technical error.'], correct: 'C' },
+            { id: 41, element: 'ING', competence: 'Evaluasi', type: 'single-choice', question: 'Which sentence from the text expresses an **opinion** rather than a factual statement?', options: ['A. Supply chain inefficiencies are often ignored.', 'B. A recent study showed that 40% of goods transport time is wasted.', 'C. I believe they are the single greatest threat to modern commerce.', 'D. Analysts argue that blockchain technology can potentially solve many issues.', 'E. The industry continues to rely on legacy systems.'], correct: 'C' },
+            { id: 42, element: 'ING', competence: 'Evaluasi', type: 'single-choice', question: 'The statement "40% of goods transport time is wasted" would be considered a valid piece of information if...', options: ['A. It aligns with the author\'s personal belief.', 'B. The Logistics Institute is a recognized and credible source.', 'C. The number 40% is appealing to the general reader.', 'D. The author provides a vivid description of the wasted time.', 'E. It supports the conclusion about the economic crisis.'], correct: 'B' },
+            { id: 43, element: 'ING', competence: 'Evaluasi', type: 'multi-choice', question: 'Which of the following phrases indicate the use of speculative language or opinion? (Select all that apply)', options: ['A. I believe', 'B. A recent study showed', 'C. can potentially', 'D. It is highly likely'], correct: ['A', 'C', 'D'] },
+            { id: 44, element: 'ING', competence: 'Apresiasi', type: 'single-choice', question: 'The author\'s overall tone in Text 3 can best be described as...', options: ['A. Indifferent and neutral.', 'B. Highly optimistic and cheerful.', 'C. Critical and apprehensive.', 'D. Whimsical and nostalgic.', 'E. Humorous and lighthearted.'], correct: 'C' },
+            { id: 45, element: 'ING', competence: 'Evaluasi', type: 'single-choice', question: 'If the text had stated that a supply chain crisis was caused by space-faring aliens, this would be an example of...', options: ['A. A realistic prediction.', 'B. A scientifically verifiable fact.', 'C. A fantastical element.', 'D. A well-supported hypothesis.', 'E. A minor technical error.'], correct: 'C' },
             
             // SOAL 46-60 (CAMPURAN - INFERENSIAL LANJUTAN/APRESIASI)
-            { id: 46, element: 'ING', competence: 'Inferensial', question: 'The phrase "a silver lining" most likely implies a(n)...', options: ['A. Negative outcome', 'B. Hidden benefit or positive aspect', 'C. Neutral observation', 'D. Dangerous consequence', 'E. Financial disaster'], correct: 'B' },
-            { id: 47, element: 'ING', competence: 'Inferensial', question: 'If a news article is titled "Why the New Tax Law Failed to Boost Investment," the target audience is most likely...', options: ['A. Elementary school students', 'B. Financial experts and policymakers', 'C. Fiction novelists', 'D. Professional athletes', 'E. Gardeners and botanists'], correct: 'B' },
-            { id: 48, element: 'ING', competence: 'Inferensial', question: 'In a narrative, a character often appears in dark clothing and avoids eye contact. We can infer the character\'s personality is likely...', options: ['A. Joyful and outgoing', 'B. Mysterious or reserved', 'C. Honest and transparent', 'D. Arrogant and loud', 'E. Talkative and friendly'], correct: 'B' },
-            { id: 49, element: 'ING', competence: 'Inferensial', question: 'Which detail best supports the idea that plastic pollution is a complex problem?', options: ['A. Plastic production is increasing globally.', 'B. Many countries ban single-use plastics.', 'C. It affects marine life and human health, and requires technological, social, and political solutions.', 'D. Plastic is cheap and easy to manufacture.', 'E. Most plastic is recyclable.'], correct: 'C' },
-            { id: 50, element: 'ING', competence: 'Tekstual', question: 'Which sentence correctly synthesizes information from these two sources? (Source 1: Bears hibernate in winter. Source 2: Hibernation is a state of metabolic depression.)', options: ['A. Bears frequently hunt during the cold winter months.', 'B. Metabolic depression is harmful to all mammals.', 'C. Bears enter a state of metabolic depression during winter hibernation.', 'D. All animals hibernate when the weather changes.', 'E. Winter is the best season for bears to travel.'], correct: 'C' },
-            { id: 51, element: 'ING', competence: 'Inferensial', question: 'If a text describes a character carefully collecting ancient maps and spending nights studying star charts, the predicted outcome of their story is likely to involve...', options: ['A. A change in their profession.', 'B. A sudden financial loss.', 'C. A dangerous but rewarding expedition or discovery.', 'D. Getting married and settling down.', 'E. Buying a new house.'], correct: 'C' },
-            { id: 52, element: 'ING', competence: 'Evaluasi', question: 'The use of simple, declarative sentences in a highly complex philosophical essay would most likely be judged as...', options: ['A. Inappropriate, as it undermines the complexity of the subject.', 'B. Appropriate, as it makes the complex subject accessible.', 'C. Mandatory for academic writing.', 'D. A sign of the author\'s expertise.', 'E. A stylistic choice with no impact.'], correct: 'B' },
-            { id: 53, element: 'ING', competence: 'Inferensial', question: 'What is the implied consequence of a company prioritizing short-term profits over environmental sustainability?', options: ['A. Lower operational costs now, but potential long-term environmental and reputation damage.', 'B. Guaranteed success and permanent market leadership.', 'C. Increased consumer trust and loyalty.', 'D. Strict adherence to all government regulations.', 'E. Automatic financial collapse.'], correct: 'A' },
-            { id: 54, element: 'ING', competence: 'Tekstual', question: 'To classify different types of renewable energy sources, which categories would be most suitable based on their origins?', options: ['A. Domestic and International.', 'B. Expensive and Cheap.', 'C. Solar, Wind, and Geothermal.', 'D. Profitable and Unprofitable.', 'E. Old and New Technologies.'], correct: 'C' },
-            { id: 55, element: 'ING', competence: 'Apresiasi', question: 'If a poem about despair uses metaphors of "black iron skies" and "the sea of glass," the emotional response the author is trying to evoke is primarily one of...', options: ['A. Joy and freedom', 'B. Nostalgia and warmth', 'C. Gloom and hopelessness', 'D. Excitement and thrill', 'E. Confusion and curiosity'], correct: 'C' },
-            { id: 56, element: 'ING', competence: 'Evaluasi', question: 'A writer describing a spaceship traveling faster than the speed of light is employing a(n)...', options: ['A. Realistic prediction.', 'B. Scientifically verifiable fact.', 'C. Fantastical element.', 'D. Historical anomaly.', 'E. Logical deduction'], correct: 'C' },
-            { id: 57, element: 'ING', competence: 'Tekstual', question: 'If the key steps of a process are "Identify the Problem," "Analyze Data," "Propose Solutions," and "Implement & Monitor," the best kerangka (outline) title for this structure is...', options: ['A. Phases of Market Research.', 'B. Steps in the Decision-Making Process.', 'C. Stages of Product Development.', 'D. Principles of Project Management.', 'E. Goals of the Marketing Team.'], correct: 'B' },
-            { id: 58, element: 'ING', competence: 'Inferensial', question: 'What can be inferred about the relationship between two political leaders described as "cautious allies who rarely share a podium"?', options: ['A. They are close friends and collaborators.', 'B. They share many common goals but are deeply suspicious of each other.', 'C. They are sworn enemies in public.', 'D. They are brothers separated by a feud.', 'E. They are rivals who pretend to cooperate.'], correct: 'B' },
-            { id: 59, element: 'ING', competence: 'Evaluasi', question: 'A historical text describing a king as "the wisest and kindest ruler in history" is likely presenting a(n)...', options: ['A. Objective fact supported by verifiable sources.', 'B. Factual summary of his reign.', 'C. Opinion or biased assessment.', 'D. Scientific truth.', 'E. Irrelevant detail.'], correct: 'C' },
-            { id: 60, element: 'ING', competence: 'Apresiasi', question: 'A reviewer stating, "The novel\'s plot was slow, but the character development was deeply rewarding," is primarily expressing a positive response to the novel\'s...', options: ['A. Pacing', 'B. Dialogue', 'C. Theme', 'D. Emotional depth of the characters', 'E. Length'], correct: 'D' },
+            { id: 46, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'The phrase "a silver lining" most likely implies a(n)...', options: ['A. Negative outcome', 'B. Hidden benefit or positive aspect', 'C. Neutral observation', 'D. Dangerous consequence', 'E. Financial disaster'], correct: 'B' },
+            { id: 47, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'If a news article is titled "Why the New Tax Law Failed to Boost Investment," the target audience is most likely...', options: ['A. Elementary school students', 'B. Financial experts and policymakers', 'C. Fiction novelists', 'D. Professional athletes', 'E. Gardeners and botanists'], correct: 'B' },
+            { id: 48, element: 'ING', competence: 'Inferensial', type: 'true-false', question: 'Statement: The main idea of a paragraph is always found in the last sentence.', correct: 'B' }, // B. False (can be anywhere)
+            { id: 49, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'Which detail best supports the idea that plastic pollution is a complex problem?', options: ['A. Plastic production is increasing globally.', 'B. Many countries ban single-use plastics.', 'C. It affects marine life and human health, and requires technological, social, and political solutions.', 'D. Plastic is cheap and easy to manufacture.', 'E. Most plastic is recyclable.'], correct: 'C' },
+            { id: 50, element: 'ING', competence: 'Tekstual', type: 'single-choice', question: 'Which sentence correctly synthesizes information from these two sources? (Source 1: Bears hibernate in winter. Source 2: Hibernation is a state of metabolic depression.)', options: ['A. Bears frequently hunt during the cold winter months.', 'B. Metabolic depression is harmful to all mammals.', 'C. Bears enter a state of metabolic depression during winter hibernation.', 'D. All animals hibernate when the weather changes.', 'E. Winter is the best season for bears to travel.'], correct: 'C' },
+            { id: 51, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'If a text describes a character carefully collecting ancient maps and spending nights studying star charts, the predicted outcome of their story is likely to involve...', options: ['A. A change in their profession.', 'B. A sudden financial loss.', 'C. A dangerous but rewarding expedition or discovery.', 'D. Getting married and settling down.', 'E. Buying a new house.'], correct: 'C' },
+            { id: 52, element: 'ING', competence: 'Evaluasi', type: 'single-choice', question: 'The use of simple, declarative sentences in a highly complex philosophical essay would most likely be judged as...', options: ['A. Inappropriate, as it undermines the complexity of the subject.', 'B. Appropriate, as it makes the complex subject accessible.', 'C. Mandatory for academic writing.', 'D. A sign of the author\'s expertise.', 'E. A stylistic choice with no impact.'], correct: 'B' },
+            { id: 53, element: 'ING', competence: 'Inferensial', type: 'multi-choice', question: 'Which two phrases are considered formal vocabulary suitable for academic writing?', options: ['A. What\'s up', 'B. consequently', 'C. for example', 'D. I guess'], correct: ['B', 'C'] },
+            { id: 54, element: 'ING', competence: 'Tekstual', type: 'single-choice', question: 'To classify different types of renewable energy sources, which categories would be most suitable based on their origins?', options: ['A. Domestic and International.', 'B. Expensive and Cheap.', 'C. Solar, Wind, and Geothermal.', 'D. Profitable and Unprofitable.', 'E. Old and New Technologies.'], correct: 'C' },
+            { id: 55, element: 'ING', competence: 'Apresiasi', type: 'single-choice', question: 'If a poem about despair uses metaphors of "black iron skies" and "the sea of glass," the emotional response the author is trying to evoke is primarily one of...', options: ['A. Joy and freedom', 'B. Nostalgia and warmth', 'C. Gloom and hopelessness', 'D. Excitement and thrill', 'E. Confusion and curiosity'], correct: 'C' },
+            { id: 56, element: 'ING', competence: 'Evaluasi', type: 'single-choice', question: 'A writer describing a spaceship traveling faster than the speed of light is employing a(n)...', options: ['A. Realistic prediction.', 'B. Scientifically verifiable fact.', 'C. A fantastical element.', 'D. A historical anomaly.', 'E. A logical deduction'], correct: 'C' },
+            { id: 57, element: 'ING', competence: 'Tekstual', type: 'single-choice', question: 'If the key steps of a process are "Identify the Problem," "Analyze Data," "Propose Solutions," and "Implement & Monitor," the best kerangka (outline) title for this structure is...', options: ['A. Phases of Market Research.', 'B. Steps in the Decision-Making Process.', 'C. Stages of Product Development.', 'D. Principles of Project Management.', 'E. Goals of the Marketing Team.'], correct: 'B' },
+            { id: 58, element: 'ING', competence: 'Inferensial', type: 'single-choice', question: 'What can be inferred about the relationship between two political leaders described as "cautious allies who rarely share a podium"?', options: ['A. They are close friends and collaborators.', 'B. They share many common goals but are deeply suspicious of each other.', 'C. They are sworn enemies in public.', 'D. They are brothers separated by a feud.', 'E. They are rivals who pretend to cooperate.'], correct: 'B' },
+            { id: 59, element: 'ING', competence: 'Evaluasi', type: 'single-choice', question: 'A historical text describing a king as "the wisest and kindest ruler in history" is likely presenting a(n)...', options: ['A. Objective fact supported by verifiable sources.', 'B. Factual summary of his reign.', 'C. Opinion or biased assessment.', 'D. Scientific truth.', 'E. Irrelevant detail.'], correct: 'C' },
+            { id: 60, element: 'ING', competence: 'Apresiasi', type: 'single-choice', question: 'A reviewer stating, "The novel\'s plot was slow, but the character development was deeply rewarding," is primarily expressing a positive response to the novel\'s...', options: ['A. Pacing', 'B. Dialogue', 'C. Theme', 'D. Emotional depth of the characters', 'E. Length'], correct: 'D' },
         ];
 
 
-        // --- Definisi Fungsi ---
+        // --- Definisi Fungsi Bantuan ---
+
+        function processQuestions(rawQuestions, subject) {
+            const processedQuestions = [];
+            let currentTextContext = null;
+            let questionNumberCounter = 1;
+            
+            rawQuestions.forEach(item => {
+                if (item.type === 'text') {
+                    // Hanya BI dan ING yang memerlukan konteks berulang
+                    if (subject === 'BI' || subject === 'ING') {
+                        currentTextContext = item.content;
+                    }
+                } else {
+                    // Tambahkan properti nomor soal dan konteks teks (jika ada)
+                    processedQuestions.push({
+                        ...item,
+                        questionNumber: questionNumberCounter++,
+                        textContext: currentTextContext,
+                    });
+                    // Hapus konteks teks jika soal tersebut bukan bagian dari teks (ini hanya terjadi di MTK,
+                    // tapi MTK tidak melalui fungsi ini, jadi ini aman)
+                }
+            });
+            // Untuk MTK, kita perlu menambahkan questionNumber secara manual karena tidak ada blok 'text'
+            if (subject === 'MTK') {
+                 rawQuestions.forEach((q, index) => q.questionNumber = index + 1);
+                 return rawQuestions;
+            }
+            return processedQuestions;
+        }
+
+        // --- Definisi Fungsi Utama ---
         function showExitModal() {
             if (!isExamActive) return;
             clearInterval(timerInterval);
@@ -332,7 +384,6 @@
             isExamActive = false;
             timeRemaining = TIME_LIMIT_SECONDS;
             
-            // Jaminan elemen sudah ada karena fungsi ini dipanggil setelah DOMContentLoaded
             const examContainer = document.getElementById('exam-container');
             const splashScreen = document.getElementById('splash-screen');
             const submitButton = document.getElementById('submit-button');
@@ -364,7 +415,7 @@
 
         function updateTimerDisplay() {
             const display = document.getElementById('timer-display');
-            if (!display) return; // Tambahkan cek untuk display
+            if (!display) return; 
 
             display.textContent = `Waktu Tersisa: ${formatTime(timeRemaining)}`;
             
@@ -393,47 +444,89 @@
             }
         }
 
+        function renderMath() {
+            if (typeof renderMathInElement !== 'undefined') {
+                renderMathInElement(document.getElementById('quiz-form'), {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false},
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+
+
         function renderQuiz() {
             const form = document.getElementById('quiz-form');
-            if (!form) return; // Cek form
+            if (!form) return; 
 
-            let questionNumber = 1;
-            
-            form.innerHTML = currentQuestions.map(item => {
-                if (item.type === 'text') {
-                    return `
-                        <div class="question-card bg-gray-100 p-4 sm:p-6 rounded-xl border-t-4 border-gray-400 mb-4 sm:mb-6">
-                            <p class="text-xs sm:text-sm font-bold mb-2 text-gray-700">Teks Bacaan:</p>
-                            <div class="text-sm sm:text-base text-gray-800">${item.content}</div>
-                        </div>
-                    `;
-                } else {
-                    const q = item;
-                    const optionsHTML = q.options.map((option, index) => {
-                        const optionChar = String.fromCharCode(65 + index);
-                        return `
-                            <input type="radio" id="q${q.id}_${optionChar}" name="q${q.id}" value="${optionChar}" class="hidden">
-                            <label for="q${q.id}_${optionChar}" class="option-label text-gray-700">
-                                <span class="text-content">${option}</span>
-                            </label>
-                        `;
-                    }).join('');
-    
-                    const competenceLabel = q.competence ? ` | ${q.competence}` : '';
+            form.innerHTML = currentQuestions.map(q => {
+                // Tentukan tipe input: checkbox untuk multi-choice, radio untuk single/true-false
+                const inputType = q.type === 'multi-choice' ? 'checkbox' : 'radio';
+                
+                let optionsHTML = '';
+                let displayOptions = q.options || [];
+                let instruction = '';
+                const isInggris = q.element === 'ING';
 
-                    const card = `
-                        <div id="card-q${q.id}" class="question-card bg-white p-4 sm:p-6 rounded-xl border-t-4 border-blue-500">
-                            <p class="text-xs font-light text-blue-500 mb-1">(${q.element}${competenceLabel})</p>
-                            <p class="text-base sm:text-lg font-semibold mb-3 text-gray-800">Soal ${questionNumber++}:</p>
-                            <div class="text-lg sm:text-xl mb-4 font-medium text-gray-900">
-                                <span class="text-content">${q.question}</span>
-                            </div>
-                            <div class="options-container">${optionsHTML}</div>
-                        </div>
-                    `;
-                    return card;
+                if (q.type === 'true-false') {
+                    if (isInggris) {
+                        displayOptions = ['A. True', 'B. False'];
+                        instruction = '<p class="text-sm font-bold text-red-600 mb-2">Instruction: Determine if the statement is True or False.</p>';
+                    } else {
+                        displayOptions = ['A. Benar', 'B. Salah'];
+                        instruction = '<p class="text-sm font-bold text-red-600 mb-2">Instruksi: Tentukan apakah pernyataan tersebut Benar atau Salah.</p>';
+                    }
+                } else if (q.type === 'multi-choice') {
+                    instruction = '<p class="text-sm font-bold text-red-600 mb-2">Instruksi: Pilih SEMUA jawaban yang benar.</p>';
                 }
+
+
+                optionsHTML = displayOptions.map((option, index) => {
+                    const optionChar = String.fromCharCode(65 + index);
+                    const inputId = `q${q.id}_${optionChar}`;
+                    const inputName = `q${q.id}`;
+                    const inputValue = optionChar;
+                    
+                    return `
+                        <input type="${inputType}" id="${inputId}" name="${inputName}" value="${inputValue}" class="hidden">
+                        <label for="${inputId}" class="option-label text-gray-700">
+                            <span class="text-content">${option}</span>
+                        </label>
+                    `;
+                }).join('');
+
+                // Teks konteks diulang jika ada (untuk BI/ING)
+                const textContextHTML = q.textContext ? 
+                    `<div class="context-box bg-gray-50 p-4 rounded-xl mb-4 border-l-4 border-indigo-400">
+                        <p class="text-xs sm:text-sm font-bold mb-2 text-gray-700">${isInggris ? 'READING TEXT:' : 'TEKS BACAAN:'}</p>
+                        <div class="text-sm sm:text-base text-gray-700">${q.textContext}</div>
+                    </div>` : '';
+
+                const competenceLabel = q.competence ? ` | ${q.competence}` : '';
+
+                const card = `
+                    <div id="card-q${q.id}" class="question-card bg-white p-4 sm:p-6 rounded-xl border-t-4 border-blue-500">
+                        <p class="text-xs font-light text-blue-500 mb-1">(${q.element}${competenceLabel})</p>
+                        <p class="text-base sm:text-lg font-semibold mb-3 text-gray-800">Soal ${q.questionNumber}:</p>
+                        
+                        ${textContextHTML}
+                        
+                        ${instruction}
+                        <div class="text-lg sm:text-xl mb-4 font-medium text-gray-900">
+                            <span class="text-content">${q.question}</span>
+                        </div>
+                        <div class="options-container flex flex-col">${optionsHTML}</div>
+                    </div>
+                `;
+                return card;
             }).join('');
+
+            // Panggil fungsi render Math setelah semua soal di-render
+            if (currentQuestions.some(q => q.element === 'Bilangan' || q.element === 'Aljabar' || q.element === 'Geometri' || q.element === 'Trigonometri')) {
+                renderMath();
+            }
         }
 
         function submitQuiz(isManual) {
@@ -444,9 +537,9 @@
             const form = document.getElementById('quiz-form');
             const resultSection = document.getElementById('result-section');
             const submitButton = document.getElementById('submit-button');
-            const totalQuestions = currentQuestions.filter(q => q.id).length;
+            const totalQuestions = currentQuestions.length;
 
-            if (!submitButton || !resultSection || !form) return; // Cek keberadaan elemen penting
+            if (!submitButton || !resultSection || !form) return; 
 
             if (!isManual) {
                 document.getElementById('timer-display').textContent = 'Waktu Habis. Hasil Dikirim.';
@@ -459,37 +552,63 @@
             submitButton.classList.add('bg-gray-400', 'cursor-not-allowed');
             submitButton.textContent = 'Hasil Ditampilkan';
 
-            currentQuestions.filter(q => q.id).forEach(q => {
-                const selectedOption = form.querySelector(`input[name="q${q.id}"]:checked`);
+            currentQuestions.forEach(q => {
                 const questionCard = document.getElementById(`card-q${q.id}`);
-                
-                if (!questionCard) return; // Cek untuk menghindari error jika card tidak ditemukan
+                const optionsContainer = questionCard?.querySelector('.options-container');
 
-                const optionsContainer = questionCard.querySelector('.options-container');
+                if (!questionCard || !optionsContainer) return;
 
                 questionCard.classList.remove('border-blue-500', 'border-yellow-500', 'border-red-500', 'border-green-500');
 
-                optionsContainer.querySelectorAll('input[type="radio"]').forEach(radio => {
-                    const label = radio.nextElementSibling;
-                    const optionChar = radio.value;
-
-                    if (optionChar === correctAnswers[q.id]) {
-                        label.classList.add('correct');
+                let isCorrect = false;
+                let selectedValues = [];
+                // Pastikan correctValues selalu berupa array untuk mempermudah perbandingan
+                const rawCorrect = correctAnswers[q.id];
+                const correctValues = Array.isArray(rawCorrect) ? rawCorrect : [rawCorrect];
+                
+                // 1. Kumpulkan pilihan user dan nonaktifkan semua input
+                optionsContainer.querySelectorAll('input').forEach(input => {
+                    input.disabled = true;
+                    if (input.checked) {
+                        selectedValues.push(input.value);
                     }
                     
-                    if (selectedOption && radio === selectedOption) {
-                        if (radio.value === correctAnswers[q.id]) {
-                            score++;
-                            questionCard.classList.add('border-green-500');
-                        } else {
-                            questionCard.classList.add('border-red-500');
-                            label.classList.add('incorrect');
-                        }
-                    } else if (!selectedOption) {
-                        questionCard.classList.add('border-yellow-500'); 
+                    const label = input.nextElementSibling;
+                    const optionChar = input.value;
+
+                    // Tandai jawaban yang benar (correct answer highlighting)
+                    if (correctValues.includes(optionChar)) {
+                        label.classList.add('correct');
                     }
-                    radio.disabled = true;
                 });
+
+                // 2. Cek Jawaban
+                if (selectedValues.length === 0) {
+                    questionCard.classList.add('border-yellow-500'); // Tidak dijawab
+                    isCorrect = false;
+                } else {
+                    // Sort both arrays for reliable comparison 
+                    selectedValues.sort();
+                    const userCorrectValues = [...correctValues].sort();
+                    
+                    // Cek apakah pilihan user sama persis dengan jawaban benar
+                    isCorrect = (selectedValues.length === userCorrectValues.length) &&
+                                 selectedValues.every((val, index) => val === userCorrectValues[index]);
+
+                    if (isCorrect) {
+                        score++;
+                        questionCard.classList.add('border-green-500');
+                    } else {
+                        questionCard.classList.add('border-red-500');
+                        // Highlight INCORRECT choices made by user
+                        optionsContainer.querySelectorAll('input').forEach(input => {
+                            // Jika dicentang DAN bukan termasuk jawaban yang benar
+                            if (input.checked && !correctValues.includes(input.value)) {
+                                input.nextElementSibling.classList.add('incorrect');
+                            }
+                        });
+                    }
+                }
             });
 
             const maxScore = totalQuestions;
@@ -523,13 +642,13 @@
 
             if (subject === 'MTK') {
                 document.getElementById('exam-title').textContent = "Ujian TKA Matematika (30 Soal)";
-                currentQuestions = mathQuestions;
+                currentQuestions = processQuestions(mathQuestions, subject);
             } else if (subject === 'BI') {
                 document.getElementById('exam-title').textContent = "Ujian TKA Bahasa Indonesia (30 Soal)";
-                currentQuestions = indonesianQuestions;
+                currentQuestions = processQuestions(indonesianQuestions, subject);
             } else if (subject === 'ING') {
                 document.getElementById('exam-title').textContent = "Ujian TKA Bahasa Inggris (30 Soal)";
-                currentQuestions = englishQuestions;
+                currentQuestions = processQuestions(englishQuestions, subject);
             } else {
                 return;
             }
@@ -569,7 +688,10 @@
             if (btnExitModal) btnExitModal.addEventListener('click', showExitModal);
 
             const btnSubmit = document.getElementById('submit-button');
-            if (btnSubmit) btnSubmit.addEventListener('click', () => submitQuiz(true));
+            if (btnSubmit) btnSubmit.addEventListener('click', (e) => {
+                e.preventDefault(); // Mencegah submit form bawaan
+                submitQuiz(true);
+            });
 
             // 3. Lampirkan event listener untuk Modal Konfirmasi
             const modalResume = document.getElementById('modal-resume');
